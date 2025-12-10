@@ -1,37 +1,43 @@
 from rest_framework import serializers
-from .models import Company, Equipment, Technician, MaintenancePlan, WorkOrder
+from .models import Emp, Eq, Tec, PM, OT
 
 
-class CompanySerializer(serializers.ModelSerializer):
+class SerBase(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pass
+
+
+# Evitamos sobre-ingenieria.
+# Usamos el patron de Vistas: variables cortas.
+# En Serializers, 'model' en Meta es requerido.
+
+
+class SerEmp(SerBase):
     class Meta:
-        model = Company
-
+        model = Emp
         fields = "__all__"
 
 
-class EquipmentSerializer(serializers.ModelSerializer):
+class SerEq(SerBase):
     class Meta:
-        model = Equipment
-
+        model = Eq
         fields = "__all__"
 
 
-class TechnicianSerializer(serializers.ModelSerializer):
+class SerTec(SerBase):
     class Meta:
-        model = Technician
-
-        fields = "__all__"
-    
-
-class MaintenancePlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MaintenancePlan
-
+        model = Tec
         fields = "__all__"
 
 
-class WorkOrderSerializer(serializers.ModelSerializer):
+class SerPM(SerBase):
     class Meta:
-        model = WorkOrder
+        model = PM
+        fields = "__all__"
 
+
+class SerOT(SerBase):
+    class Meta:
+        model = OT
         fields = "__all__"

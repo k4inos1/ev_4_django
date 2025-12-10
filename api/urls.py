@@ -1,19 +1,21 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    CompanyViewSet,
-    EquipmentViewSet,
-    TechnicianViewSet,
-    MaintenancePlanViewSet,
-    WorkOrderViewSet,
+    EmpVS,
+    EqVS,
+    TecVS,
+    PMVS,
+    OTVS,
+    ResumenVS,
 )
 
-router = DefaultRouter()
-router.register(r"companies", CompanyViewSet, basename="company")
-router.register(r"equipments", EquipmentViewSet, basename="equipment")
-router.register(r"technicians", TechnicianViewSet, basename="technician")
-router.register(r"plans", MaintenancePlanViewSet, basename="maintenanceplan")
-router.register(r"work-orders", WorkOrderViewSet, basename="workorder")
+ruteador = DefaultRouter()
+ruteador.register(r"emp", EmpVS, basename="emp")
+ruteador.register(r"eq", EqVS, basename="eq")
+ruteador.register(r"tec", TecVS, basename="tec")
+ruteador.register(r"pm", PMVS, basename="pm")
+ruteador.register(r"ot", OTVS, basename="ot")
+ruteador.register(r"resumen", ResumenVS, basename="resumen")
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -21,18 +23,26 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
-# from drf_spectacular.views import (
-#     SpectacularAPIView,
-#     SpectacularJSONView,
-# )
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularJSONView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
 
 urlpatterns = [
-    path("api/", include(router.urls)),
-    # JWT
-    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # Documentation
-    # path("schema/", SpectacularAPIView.as_view(), name="schema"),
-    # path("schema/json/", SpectacularJSONView.as_view(), name="schema-json"),
-    path("schema/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("api/", include(ruteador.urls)),
+    # Documentacion
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("schema/json/", SpectacularJSONView.as_view(), name="schema-json"),
+    path(
+        "schema/swagger/",
+        SpectacularSwaggerView.as_view(url_name="schema-json"),
+        name="swagger-ui",
+    ),
+    path(
+        "schema/redoc/",
+        SpectacularRedocView.as_view(url_name="schema-json"),
+        name="redoc",
+    ),
 ]

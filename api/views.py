@@ -1,27 +1,30 @@
 from rest_framework import viewsets
-from .models import Company, Equipment, Technician, MaintenancePlan, WorkOrder
+from .models import Emp, Eq, Tec, PM, OT
 from .serializers import (
-    CompanySerializer,
-    EquipmentSerializer,
-    TechnicianSerializer,
-    MaintenancePlanSerializer,
-    WorkOrderSerializer,
+    SerEmp,
+    SerEq,
+    SerTec,
+    SerPM,
+    SerOT,
 )
 
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .services import ServIA, ServOT, ServGral  # Modern Service Layer
 
 
-class NPaginacion(PageNumberPagination):
+class PagN(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
 
 
-class BaseViewSet(viewsets.ModelViewSet):
+class VSBase(viewsets.ModelViewSet):
     f_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    pagination_class = NPaginacion
+    pagination_class = PagN
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,84 +32,86 @@ class BaseViewSet(viewsets.ModelViewSet):
             self.queryset = self.s_query
         if hasattr(self, "s_class"):
             self.serializer_class = self.s_class
-        if hasattr(self, "fs_fields"):
-            self.filterset_fields = self.fs_fields
-        if hasattr(self, "s_fields"):
-            self.search_fields = self.s_fields
-        if hasattr(self, "o_fields"):
-            self.ordering_fields = self.o_fields
+        if hasattr(self, "c_fil"):
+            self.filterset_fields = self.c_fil
+        if hasattr(self, "c_bus"):
+            self.search_fields = self.c_bus
+        if hasattr(self, "c_ord"):
+            self.ordering_fields = self.c_ord
         if hasattr(self, "f_backends"):
             self.filter_backends = self.f_backends
 
 
-class CompanyViewSet(BaseViewSet):
-    s_query = Company.objects.all()
-    s_class = CompanySerializer
-    fs_fields = ["rut"]
-    s_fields = ["nombre", "direccion"]
-    o_fields = ["nombre", "created_at"]
+class EmpVS(VSBase):
+    s_query = Emp.objects.all()
+    s_class = SerEmp
+    c_fil = ["rut"]
+    c_bus = ["nombre", "direccion"]
+    c_ord = ["nombre", "created_at"]
 
 
-class EquipmentViewSet(BaseViewSet):
-    s_query = Equipment.objects.select_related("empresa").all()
-    s_class = EquipmentSerializer
-    fs_fields = ["empresa", "critico"]
-    s_fields = ["nombre", "serie"]
-    o_fields = ["fecha_instalacion"]
+class EqVS(VSBase):
+    s_query = Eq.objects.select_related("empresa").all()
+    s_class = SerEq
+    c_fil = ["empresa", "critico"]
+    c_bus = ["nombre", "serie"]
+    c_ord = ["fecha_instalacion"]
 
 
-class TechnicianViewSet(BaseViewSet):
-    s_query = Technician.objects.select_related("usuario").all()
-    s_class = TechnicianSerializer
-    fs_fields = ["especialidad"]
-    s_fields = ["nombre"]
-    o_fields = ["nombre"]
+class TecVS(VSBase):
+    s_query = Tec.objects.select_related("usuario").all()
+    s_class = SerTec
+    c_fil = ["especialidad"]
+    c_bus = ["nombre"]
+    c_ord = ["nombre"]
 
 
-class MaintenancePlanViewSet(BaseViewSet):
-    s_query = MaintenancePlan.objects.select_related("equipo").all()
-    s_class = MaintenancePlanSerializer
-    fs_fields = ["activo", "equipo"]
-    s_fields = ["nombre"]
-    o_fields = ["frecuencia"]
+class PMVS(VSBase):
+    s_query = PM.objects.select_related("equipo").all()
+    s_class = SerPM
+    c_fil = ["activo", "equipo"]
+    c_bus = ["nombre"]
+    c_ord = ["frecuencia"]
 
 
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from .ai_service import AIService
-
-
-class WorkOrderViewSet(BaseViewSet):
-    s_query = WorkOrder.objects.select_related("plan", "equipo", "tecnico").all()
-    s_class = WorkOrderSerializer
-    fs_fields = ["estado", "tecnico", "equipo"]
-    s_fields = ["notas"]
-    o_fields = ["fecha_programada", "estado"]
+class OTVS(VSBase):
+    s_query = OT.objects.select_related("plan", "equipo", "tecnico").all()
+    s_class = SerOT
+    c_fil = ["estado", "tecnico", "equipo"]
+    c_bus = ["notas"]
+    c_ord = ["fecha_programada", "estado"]
 
     @action(detail=True, methods=["post"])
-    def analyze(self, request, pk=None):
+    def analizar(self, request, pk=None):
         """
-        AI Endpoint to analyze a specific Work Order.
-        Returns suggested priority and recommended technician.
+        Endpoint IA (Usa ServIA).
         """
-        work_order = self.get_object()
+        ot = self.get_object()
 
-        # 1. AI Analysis for Priority
-        suggested_priority = AIService.analyze_priority(work_order.notas)
+        # 1. Calc P
+        p_a = ServIA.calc_p(ot.notas)
 
-        # 2. AI Recommendation for Technician
-        # Use the category of the equipment associated with the order
-        equipment_category = work_order.equipo.categoria
-        recommendation = AIService.recommend_technician(equipment_category)
+        # 2. Busc T
+        cat = ot.equipo.categoria
+        rec = ServIA.busc_t(cat)
 
         return Response(
             {
-                "current_priority": work_order.prioridad,
-                "suggested_priority": suggested_priority,
-                "match_analysis": {
-                    "equipment": work_order.equipo.nombre,
-                    "category": equipment_category,
-                    "recommended_technician": recommendation,
-                },
+                "act_p": ot.prioridad,
+                "cal_p": p_a,
+                "match": {"eq": ot.equipo.nombre, "cat": cat, "rec": rec},
             }
         )
+
+
+class ResumenVS(viewsets.ViewSet):
+    """
+    Vista de Resumen Global (Datos Totales).
+    """
+
+    def list(self, request):
+        """
+        Devuelve el payload de Servicio General.
+        """
+        data = ServGral.resumen_api()
+        return Response(data)
