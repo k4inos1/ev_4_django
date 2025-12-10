@@ -1,36 +1,36 @@
 from django.db import models
 
 
-class EquipmentCategory(models.TextChoices):
-    ELECTRICO = "ELECTRICO", "Eléctrico"
-    HIDRAULICO = "HIDRAULICO", "Hidráulico"
-    MECANICO = "MECANICO", "Mecánico"
-    GENERAL = "GENERAL", "General"
+class CE(models.TextChoices):
+    ELEC = "ELEC", "Eléctrico"
+    HIDR = "HIDR", "Hidráulico"
+    MECA = "MECA", "Mecánico"
+    GRAL = "GRAL", "General"
 
 
-class TechnicianSpecialty(models.TextChoices):
-    ELECTRICO = "ELECTRICO", "Eléctrico"
-    HIDRAULICO = "HIDRAULICO", "Hidráulico"
-    MECANICO = "MECANICO", "Mecánico"
-    GENERAL = "GENERAL", "General"
+class ET(models.TextChoices):
+    ELEC = "ELEC", "Eléctrico"
+    HIDR = "HIDR", "Hidráulico"
+    MECA = "MECA", "Mecánico"
+    GRAL = "GRAL", "General"
 
 
-class WorkOrderStatus(models.TextChoices):
-    PENDING = "PENDING", "Pendiente"
-    IN_PROGRESS = "IN_PROGRESS", "En Progreso"
-    COMPLETED = "COMPLETED", "Completado"
-    CANCELLED = "CANCELLED", "Cancelado"
+class EO(models.TextChoices):
+    PEND = "PEND", "Pendiente"
+    PROG = "PROG", "En Progreso"
+    COMP = "COMP", "Completado"
+    CANC = "CANC", "Cancelado"
 
 
-class WorkOrderPriority(models.TextChoices):
+class PO(models.TextChoices):
     ALTA = "ALTA", "Alta"
-    MEDIA = "MEDIA", "Media"
+    MEDI = "MEDI", "Media"
     BAJA = "BAJA", "Baja"
 
 
-# AI Configuration
-PRIORITY_KEYWORDS = {
-    WorkOrderPriority.ALTA: [
+# Config IA
+KW_PRIORIDAD = {
+    PO.ALTA: [
         ("urgente", 50),
         ("critico", 40),
         ("fuego", 50),
@@ -40,7 +40,7 @@ PRIORITY_KEYWORDS = {
         ("roto", 30),
         ("detenido", 40),
     ],
-    WorkOrderPriority.MEDIA: [
+    PO.MEDI: [
         ("revisar", 10),
         ("mantenimiento", 10),
         ("ruido", 20),
@@ -50,5 +50,5 @@ PRIORITY_KEYWORDS = {
     ],
 }
 
-THRESHOLD_HIGH = 30
-THRESHOLD_MEDIUM = 20
+UMBRAL_ALTO = 30
+UMBRAL_MEDIO = 20
