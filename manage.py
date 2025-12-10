@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Consola de Administración
 import os
 import sys
 
@@ -8,7 +9,7 @@ def main():
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
-        raise ImportError("No module named 'sys'") from exc
+        raise ImportError("No module named 'core'") from exc
     execute_from_command_line(sys.argv)
 
 
