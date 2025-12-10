@@ -71,9 +71,42 @@ class MaintenancePlanViewSet(BaseViewSet):
     o_fields = ["frecuencia"]
 
 
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .ai_service import AIService
+
+
 class WorkOrderViewSet(BaseViewSet):
     s_query = WorkOrder.objects.select_related("plan", "equipo", "tecnico").all()
     s_class = WorkOrderSerializer
     fs_fields = ["estado", "tecnico", "equipo"]
     s_fields = ["notas"]
     o_fields = ["fecha_programada", "estado"]
+
+    @action(detail=True, methods=["post"])
+    def analyze(self, request, pk=None):
+        """
+        AI Endpoint to analyze a specific Work Order.
+        Returns suggested priority and recommended technician.
+        """
+        work_order = self.get_object()
+
+        # 1. AI Analysis for Priority
+        suggested_priority = AIService.analyze_priority(work_order.notas)
+
+        # 2. AI Recommendation for Technician
+        # Use the category of the equipment associated with the order
+        equipment_category = work_order.equipo.categoria
+        recommendation = AIService.recommend_technician(equipment_category)
+
+        return Response(
+            {
+                "current_priority": work_order.prioridad,
+                "suggested_priority": suggested_priority,
+                "match_analysis": {
+                    "equipment": work_order.equipo.nombre,
+                    "category": equipment_category,
+                    "recommended_technician": recommendation,
+                },
+            }
+        )
