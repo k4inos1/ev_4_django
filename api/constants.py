@@ -1,44 +1,83 @@
 from django.db import models
 
-# estados bitwise / int (hiper-densa)
-# 0x0...
-CE_EL, CE_HI, CE_ME, CE_GR = 1, 2, 4, 8
-ET_EL, ET_HI, ET_ME, ET_GR = 1, 2, 4, 8
-EO_PE, EO_PR, EO_OK, EO_XX = 1, 2, 4, 8
-PO_AL, PO_ME, PO_BA, PO_CR = 100, 50, 10, 999
+# Constantes con nombres descriptivos y claros
+
+# Categorías de Equipo
+CATEGORIA_ELECTRICO = 1
+CATEGORIA_HIDRAULICO = 2
+CATEGORIA_MECANICO = 4
+CATEGORIA_GENERAL = 8
+
+# Especialidades de Técnico (mismo esquema que categorías)
+ESPECIALIDAD_ELECTRICO = 1
+ESPECIALIDAD_HIDRAULICO = 2
+ESPECIALIDAD_MECANICO = 4
+ESPECIALIDAD_GENERAL = 8
+
+# Estados de Orden de Trabajo
+ESTADO_PENDIENTE = 1
+ESTADO_EN_PROGRESO = 2
+ESTADO_COMPLETADO = 4
+ESTADO_CANCELADO = 8
+
+# Prioridades
+PRIORIDAD_ALTA = 100
+PRIORIDAD_MEDIA = 50
+PRIORIDAD_BAJA = 10
+PRIORIDAD_CRITICA = 999
 
 
-class CE(models.IntegerChoices):
-    EL = CE_EL, "E"
-    HI = CE_HI, "H"
-    ME = CE_ME, "M"
-    GR = CE_GR, "G"
+class CategoriaEquipo(models.IntegerChoices):
+    """Categorías de equipos industriales"""
+
+    ELECTRICO = CATEGORIA_ELECTRICO, "Eléctrico"
+    HIDRAULICO = CATEGORIA_HIDRAULICO, "Hidráulico"
+    MECANICO = CATEGORIA_MECANICO, "Mecánico"
+    GENERAL = CATEGORIA_GENERAL, "General"
 
 
-class ET(models.IntegerChoices):
-    EL = ET_EL, "E"
-    HI = ET_HI, "H"
-    ME = ET_ME, "M"
-    GR = ET_GR, "G"
+class EspecialidadTecnico(models.IntegerChoices):
+    """Especialidades de técnicos de mantenimiento"""
+
+    ELECTRICO = ESPECIALIDAD_ELECTRICO, "Eléctrico"
+    HIDRAULICO = ESPECIALIDAD_HIDRAULICO, "Hidráulico"
+    MECANICO = ESPECIALIDAD_MECANICO, "Mecánico"
+    GENERAL = ESPECIALIDAD_GENERAL, "General"
 
 
-class EO(models.IntegerChoices):
-    PEND = EO_PE, "P"
-    PROG = EO_PR, "R"
-    COMP = EO_OK, "C"
-    CANC = EO_XX, "X"
+class EstadoOrden(models.IntegerChoices):
+    """Estados de órdenes de trabajo"""
+
+    PENDIENTE = ESTADO_PENDIENTE, "Pendiente"
+    EN_PROGRESO = ESTADO_EN_PROGRESO, "En Progreso"
+    COMPLETADO = ESTADO_COMPLETADO, "Completado"
+    CANCELADO = ESTADO_CANCELADO, "Cancelado"
 
 
-class PO(models.IntegerChoices):
-    ALTA = PO_AL, "AL"
-    MEDI = PO_ME, "ME"
-    BAJA = PO_BA, "BA"
-    CRIT = PO_CR, "CX"
+class Prioridad(models.IntegerChoices):
+    """Niveles de prioridad"""
+
+    ALTA = PRIORIDAD_ALTA, "Alta"
+    MEDIA = PRIORIDAD_MEDIA, "Media"
+    BAJA = PRIORIDAD_BAJA, "Baja"
+    CRITICA = PRIORIDAD_CRITICA, "Crítica"
 
 
-# config ia (pesos)
-KW = {
-    PO_AL: [("fuego", 50), ("critico", 40)],
-    PO_ME: [("ruido", 20), ("ajuste", 10)],
+# Configuración de IA: palabras clave y pesos para cálculo de prioridad
+PALABRAS_CLAVE_PRIORIDAD = {
+    PRIORIDAD_ALTA: [
+        ("fuego", 50),
+        ("critico", 40),
+        ("urgente", 45),
+        ("falla", 35),
+    ],
+    PRIORIDAD_MEDIA: [
+        ("ruido", 20),
+        ("ajuste", 10),
+        ("revision", 15),
+    ],
 }
-UM_AL, UM_ME = 30, 20
+
+# Umbrales para clasificación de prioridad
+UMBRAL_PRIORIDAD_ALTA = 30
+UMBRAL_PRIORIDAD_MEDIA = 20
