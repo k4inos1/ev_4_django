@@ -70,6 +70,7 @@ class MotorRecomendaciones:
         # Si está cerca del promedio, recomendar
         if dias_desde_ultimo >= promedio_dias * 0.8:
             confianza = min(dias_desde_ultimo / promedio_dias, 1.0)
+            from django.utils import timezone
 
             return Recomendacion.objects.create(
                 equipo=equipo,
@@ -83,7 +84,7 @@ class MotorRecomendaciones:
                 descripcion=f"Basado en historial, este equipo necesitará mantenimiento en ~{int(promedio_dias - dias_desde_ultimo)} días",
                 accion_sugerida="Programar mantenimiento preventivo",
                 confianza=confianza,
-                fecha_estimada=datetime.now()
+                fecha_estimada=timezone.now()
                 + timedelta(days=int(promedio_dias - dias_desde_ultimo)),
             )
 

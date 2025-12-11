@@ -34,17 +34,33 @@ class ServicioScraping:
             for resultado in soup.select(".result")[:max_resultados]:
                 titulo = resultado.select_one(".result__title")
                 snippet = resultado.select_one(".result__snippet")
+                enlace = resultado.select_one("a.result__a")
 
-                if titulo and snippet:
-                    contenido = (
-                        f"{titulo.get_text(strip=True)}\n{snippet.get_text(strip=True)}"
+                if titulo and enlace:
+                    url_destino = enlace.get("href")
+                    titulo_texto = titulo.get_text(strip=True)
+
+                    # Navegar al link real para extraer contenido profundo
+                    contenido_profundo = ServicioScraping.visitar_sitio(url_destino)
+
+                    # Si falló la visita, usar el snippet como fallback
+                    contenido_final = (
+                        contenido_profundo
+                        if contenido_profundo
+                        else snippet.get_text(strip=True)
                     )
+
                     resultados.append(
                         {
-                            "titulo": titulo.get_text(strip=True),
-                            "descripcion": snippet.get_text(strip=True),
-                            "contenido": contenido,
-                            "features": ServicioScraping.extraer_features(contenido),
+                            "titulo": titulo_texto,
+                            "url": url_destino,
+                            "descripcion": (
+                                snippet.get_text(strip=True) if snippet else ""
+                            ),
+                            "contenido": contenido_final,
+                            "features": ServicioScraping.extraer_features(
+                                contenido_final
+                            ),
                         }
                     )
 
@@ -52,6 +68,28 @@ class ServicioScraping:
             return [{"error": str(e)}]
 
         return resultados
+
+    @staticmethod
+    def visitar_sitio(url: str) -> str:
+        """
+        Navega a la URL y extrae el texto principal de los párrafos.
+        """
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+            resp = requests.get(url, headers=headers, timeout=4)
+            if resp.status_code == 200:
+                s = BeautifulSoup(resp.text, "html.parser")
+                # Extraer parrafos para tener texto real
+                parrafos = s.find_all("p")
+                texto_completo = "\n".join([p.get_text() for p in parrafos])
+
+                # Limitar tamaño para no saturar BD
+                return texto_completo[:5000] if texto_completo else None
+        except:
+            return None
+        return None
 
     @staticmethod
     def extraer_features(texto: str) -> dict:

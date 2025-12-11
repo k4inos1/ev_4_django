@@ -11,8 +11,14 @@ from api.models import (
     Mantenimiento,
     AprendizajeAutomatico,
     BaseConocimiento,
+    Mantenimiento,
+    AprendizajeAutomatico,
+    BaseConocimiento,
     Recomendacion,
+    Recurso,
+    Evento,
 )
+from django.db.models import Sum
 
 
 class AnalyticsViewSet(viewsets.ViewSet):
@@ -41,6 +47,15 @@ class AnalyticsViewSet(viewsets.ViewSet):
                     "prioridad_promedio": Mantenimiento.objects.aggregate(
                         Avg("prioridad")
                     )["prioridad__avg"],
+                },
+                "recursos": {
+                    "total": Recurso.objects.count(),
+                    "stock_bajo": Recurso.objects.filter(stock__lte=5).count(),
+                },
+                "eventos": {
+                    "total": Evento.objects.count(),
+                    "no_resueltos": Evento.objects.filter(resuelto=False).count(),
+                    "criticos": Evento.objects.filter(severidad__gte=8).count(),
                 },
                 "ia": {
                     "aprendizajes": AprendizajeAutomatico.objects.count(),
@@ -125,7 +140,6 @@ class AnalyticsViewSet(viewsets.ViewSet):
                         "titulo": c.titulo,
                         "fuente": c.fuente_url,
                         "relevancia": c.relevancia_score,
-                        "usado": c.veces_utilizado,
                     }
                     for c in conocimiento
                 ],
@@ -173,4 +187,73 @@ class AnalyticsViewSet(viewsets.ViewSet):
                 "metricas": ia_sistema.metricas,
                 "estadisticas": stats,
             }
+        )
+
+    @action(detail=False, methods=["get"])
+    def resumen_costos(self, request):
+        """Resumen financiero de mantenimientos"""
+        total_costo = Mantenimiento.objects.aggregate(Sum("costo"))["costo__sum"] or 0
+        por_tipo = (
+            Mantenimiento.objects.values("tipo")
+            .annotate(total=Sum("costo"))
+            .order_by("-total")
+        )
+
+        return Response(
+            {
+                "total_acumulado": total_costo,
+                "desglose_tipo": list(por_tipo),
+                "promedio_mantenimiento": total_costo
+                / (Mantenimiento.objects.count() or 1),
+            }
+        )
+
+    @action(detail=False, methods=["get"])
+    def alertas_stock(self, request):
+        """Recursos con stock crítico"""
+        recursos = Recurso.objects.filter(stock__lte=5).order_by("stock")[:10]
+        data = [
+            {
+                "id": r.id,
+                "nombre": r.nombre,
+                "stock": r.stock,
+                "tipo": r.tipo,
+                "contacto": r.contacto,
+            }
+            for r in recursos
+        ]
+        return Response(data)
+
+    @action(detail=False, methods=["get"])
+    def eventos_recientes(self, request):
+        """Timeline de eventos"""
+        eventos = Evento.objects.all().order_by("-id")[:20]
+        data = [
+            {
+                "id": e.id,
+                "tipo": e.tipo,
+                "descripcion": e.descripcion,
+                "severidad": e.severidad,
+                "resuelto": e.resuelto,
+                "equipo": e.equipo.nombre if e.equipo else "Sistema",
+            }
+            for e in eventos
+        ]
+        return Response(data)
+
+    @action(detail=False, methods=["get"])
+    def conocimiento_list(self, request):
+        """Lista completa de conocimiento adquirido"""
+        items = BaseConocimiento.objects.all().order_by("-fecha_scraping")[:50]
+        return Response(
+            [
+                {
+                    "id": i.id,
+                    "titulo": i.titulo,
+                    "fuente": i.fuente_url,
+                    "fecha": i.fecha_scraping,
+                    "resumen": i.contenido[:100] + "..." if i.contenido else "",
+                }
+                for i in items
+            ]
         )

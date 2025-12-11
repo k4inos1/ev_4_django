@@ -3,12 +3,15 @@ Sistema de IA Principal
 Integra: ML Training + Reinforcement Learning + Web Scraping + Decisiones Inteligentes
 """
 
+import random
+import pickle
+import os
 import numpy as np
 import json
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from django.core.cache import cache
 from django.utils import timezone
-from datetime import timedelta
 
 # Importar RL de Rust si está disponible
 try:
@@ -171,39 +174,75 @@ class SistemaIA:
 
     def aprender_de_web(self, tema: str, max_resultados: int = 5) -> Dict:
         """
-        Busca en web y aprende automáticamente
-
-        Integra: scraping + extracción + aprendizaje
+        Busca en web, guarda conocimiento y genera recomendaciones
         """
         from .scraping import ServicioScraping
+        from api.models import BaseConocimiento, Recomendacion, Equipo
 
+        # 1. Scraping Real
         resultados = ServicioScraping.buscar_web(tema, max_resultados)
 
-        aprendizajes = 0
-        for resultado in resultados:
-            if "error" not in resultado:
-                # Estado basado en tema
-                estado_web = f"web_{tema.replace(' ', '_')[:30]}"
-                accion_web = "extraer_conocimiento"
+        nuevos_conocimientos = 0
+        nuevas_recomendaciones = 0
 
-                # Recompensa basada en calidad
-                contenido = resultado.get("contenido", "")
-                recompensa_web = min(len(contenido) / 1000.0, 5.0)  # Max 5.0
+        for r in resultados:
+            if "error" in r:
+                continue
 
-                # Aprender
-                self._actualizar_q_value(
-                    estado_web, accion_web, recompensa_web, estado_web
+            # 2. Guardar Conocimiento (Base de Datos)
+            # Evitar duplicados por título
+            if not BaseConocimiento.objects.filter(titulo=r["titulo"]).exists():
+                conocimiento = BaseConocimiento.objects.create(
+                    titulo=r["titulo"][:299],
+                    contenido=r["contenido"],
+                    fuente_url=r.get("url", "https://duckduckgo.com"),
+                    relevancia_score=0.85,  # Asumimos alta relevancia si viene de búsqueda exacta
                 )
-                aprendizajes += 1
+                nuevos_conocimientos += 1
 
-        self.metricas["aprendizajes_web"] += aprendizajes
+                # 3. Procesamiento "LLM" (Simulado con NLP básico por ahora)
+                # Si el texto menciona fallas o mantenimiento, crear recomendación proactiva
+                texto_bajo = r["contenido"].lower()
+                palabras_clave = [
+                    "falla",
+                    "error",
+                    "mantenimiento",
+                    "vibración",
+                    "temperatura",
+                    "desgaste",
+                ]
+
+                if any(p in texto_bajo for p in palabras_clave):
+                    # Buscar equipo relevante para asociar (random por ahora si no hay match)
+                    # Ideal: buscar equipo que coincida con el tema
+                    equipo = Equipo.objects.first()  # Simplificación
+
+                    if equipo:
+                        Recomendacion.objects.create(
+                            equipo=equipo,
+                            tipo=Recomendacion.TIPO_MANTENIMIENTO,
+                            prioridad=Recomendacion.PRIORIDAD_MEDIA,
+                            titulo=f"Insight Web: {r['titulo'][:50]}...",
+                            descripcion=f"Fuente externa sugiere atención en: {r['descripcion'][:200]}...",
+                            accion_sugerida="Revisar documentación adjunta en Base de Conocimiento",
+                            confianza=0.75,
+                            fecha_estimada=timezone.now() + timedelta(days=7),
+                        )
+                        nuevas_recomendaciones += 1
+
+                # Aprender Q-Learning (Abstracto)
+                self._actualizar_q_value(
+                    f"web_{tema[:10]}", "extraer", 1.0, "conocimiento_guardado"
+                )
+
+        self.metricas["aprendizajes_web"] += nuevos_conocimientos
         self._guardar_conocimiento()
 
         return {
             "tema": tema,
             "resultados_encontrados": len(resultados),
-            "aprendizajes": aprendizajes,
-            "total_aprendizajes_web": self.metricas["aprendizajes_web"],
+            "conocimientos_guardados": nuevos_conocimientos,
+            "recomendaciones_generadas": nuevas_recomendaciones,
         }
 
     # ═══════════════════════════════════════════════════════
@@ -361,25 +400,26 @@ class SistemaIA:
 ia_sistema = SistemaIA()
 # Auto-learning methods para ia_core.py
 
+
 def auto_aprender(self, mantenimiento, resultado):
     """Aprendizaje automático sin intervención"""
     from api.models import AprendizajeAutomatico
-    
+
     prioridad_predicha = mantenimiento.prioridad
-    prioridad_real = resultado.get('prioridad_real', prioridad_predicha)
+    prioridad_real = resultado.get("prioridad_real", prioridad_predicha)
     precision = 1.0 - abs(prioridad_predicha - prioridad_real) / 100.0
-    
-    fue_exitoso = resultado.get('fue_exitoso', True)
+
+    fue_exitoso = resultado.get("fue_exitoso", True)
     recompensa = 1.0 if fue_exitoso else -0.5
-    
-    ajustes = {'learning_rate': self.learning_rate}
-    
+
+    ajustes = {"learning_rate": self.learning_rate}
+
     aprendizaje = AprendizajeAutomatico.objects.create(
         mantenimiento=mantenimiento,
         prioridad_predicha=prioridad_predicha,
         prioridad_real=prioridad_real,
         precision_prediccion=precision,
-        ajustes_aplicados=ajustes
+        ajustes_aplicados=ajustes,
     )
-    
-    return {'precision': precision, 'recompensa': recompensa}
+
+    return {"precision": precision, "recompensa": recompensa}
