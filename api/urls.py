@@ -10,7 +10,6 @@ from .views import (
     DatabaseExplorerViewSet,
     IADashboardViewSet,
 )
-from .views_ia import DatoEntrenamientoViewSet, EntrenamientoIAViewSet
 from .views_sistema import SistemaInteligenteViewSet
 
 # Router para endpoints de la API

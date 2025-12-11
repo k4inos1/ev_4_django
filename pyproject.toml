@@ -1,8 +1,8 @@
 [project]
 name = "ev_4_django"
 version = "2.0.0"
-description = "Sistema de Mantenimiento EV4 (Distro-Grade)"
-authors = [{name = "Maintainer", email = "maintainer@linux.distro"}]
+description = "Sistema de Mantenimiento EV4 (Production-Ready)"
+authors = [{name = "EV4 Team", email = "dev@ev4.com"}]
 
 [tool.ruff]
 # Longitud de linea estricta
@@ -28,3 +28,4 @@ DJANGO_SETTINGS_MODULE = "core.settings"
 python_files = ["test_*.py", "*_test.py"]
 addopts = "--strict-markers --tb=short"
 testpaths = ["api/tests"]
+

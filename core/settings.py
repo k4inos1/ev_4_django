@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Local
-    "api.apps.ConfApi",
+    "api.apps.ApiConfig",
     # Terceros
     "rest_framework",
     "rest_framework_simplejwt",
@@ -147,3 +147,4 @@ STATICFILES_DIRS = [BASE_DIR / "core/static"]
 
 # Clave Primaria Defecto
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
