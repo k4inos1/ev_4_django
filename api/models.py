@@ -1,61 +1,137 @@
-from django.db import models
 from django.contrib.auth.models import User
-from .constants import CE, ET, EO, PO
+from django.db import models
+
+from .constants import CE, EO, ET, PO
+
+# modelos hiper-densos (opt bytes)
+
+
+class Gen(models.Model):
+    """adn config."""
+
+    adn = models.JSONField(default=dict)
+    hsh = models.CharField(max_length=64)
 
 
 class Emp(models.Model):
-    nombre = models.CharField(max_length=255)
-    direccion = models.CharField(max_length=255)
-    rut = models.CharField(max_length=20)
-    created_at = models.DateTimeField(auto_now_add=True)
+    nom = models.CharField(max_length=50)
+    dir = models.CharField(max_length=50)
+    rut = models.CharField(max_length=12)
+    t_c = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.nombre} ({self.rut})"
+        return self.nom
 
 
 class Eq(models.Model):
-    empresa = models.ForeignKey(
-        Emp, on_delete=models.CASCADE, related_name="equipments"
-    )
-    nombre = models.CharField(max_length=255)
-    serie = models.CharField(max_length=100)
-    categoria = models.CharField(max_length=20, choices=CE.choices, default=CE.GRAL)
-    critico = models.BooleanField(default=False)
-    fecha_instalacion = models.DateField()
+    emp = models.ForeignKey(Emp, on_delete=models.CASCADE)
+    nom = models.CharField(max_length=50)
+    ser = models.CharField(max_length=50)
+    cat = models.IntegerField(choices=CE.choices, default=CE.GR)
+    cri = models.BooleanField(default=False)
+    t_i = models.DateField()
+    gen = models.OneToOneField(Gen, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.nombre} ({self.serie}) - {self.get_categoria_display()}"
+        return f"{self.nom}:{self.cat}"
+
+
+class Nodo(models.Model):
+    """telemetria 4-8 bytes."""
+
+    uid = models.UUIDField(primary_key=True)
+    eq = models.ForeignKey(Eq, on_delete=models.CASCADE)
+    tip = models.IntegerField(default=1)  # 1=vibr, 2=temp
+    lec = models.FloatField(default=0.0)
+    t_u = models.DateTimeField(auto_now=True)
 
 
 class Tec(models.Model):
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
-    nombre = models.CharField(max_length=255)
-    especialidad = models.CharField(max_length=20, choices=ET.choices, default=ET.GRAL)
-    telefono = models.CharField(max_length=20)
+    usr = models.OneToOneField(User, on_delete=models.CASCADE)
+    nom = models.CharField(max_length=50)
+    esp = models.IntegerField(choices=ET.choices, default=ET.GR)
+    tel = models.CharField(max_length=20)
 
     def __str__(self):
-        return f"{self.nombre} ({self.get_especialidad_display()})"
+        return self.nom
 
 
 class PM(models.Model):
-    equipo = models.ForeignKey(Eq, on_delete=models.CASCADE, related_name="plans")
-    nombre = models.CharField(max_length=255)
-    frecuencia = models.IntegerField()
-    activo = models.BooleanField(default=True)
+    eq = models.ForeignKey(Eq, on_delete=models.CASCADE)
+    nom = models.CharField(max_length=50)
+    frq = models.IntegerField()
+    on = models.BooleanField(default=True)
 
-    def __str__(self):
-        return self.nombre
+
+class Flux(models.Model):
+    """estado de proceso (bitmask)."""
+
+    cla = models.CharField(max_length=10)  # clave
+    st = models.IntegerField(default=0)
 
 
 class OT(models.Model):
-    plan = models.ForeignKey(PM, on_delete=models.CASCADE, related_name="work_orders")
-    equipo = models.ForeignKey(Eq, on_delete=models.CASCADE, related_name="work_orders")
-    tecnico = models.ForeignKey(Tec, on_delete=models.SET_NULL, null=True, blank=True)
-    estado = models.CharField(max_length=20, choices=EO.choices, default=EO.PEND)
-    prioridad = models.CharField(max_length=10, choices=PO.choices, default=PO.MEDI)
-    fecha_programada = models.DateField()
-    fecha_termino = models.DateTimeField(null=True, blank=True)
-    notas = models.TextField(blank=True)
+    pln = models.ForeignKey(PM, on_delete=models.CASCADE)
+    eq = models.ForeignKey(Eq, on_delete=models.CASCADE)
+    tec = models.ForeignKey(
+        Tec, on_delete=models.SET_NULL, null=True, blank=True, related_name="wos"
+    )
+    st = models.IntegerField(choices=EO.choices, default=EO.PEND)
+    pr = models.IntegerField(choices=PO.choices, default=PO.MEDI)
+    t_p = models.DateField()
+    t_e = models.DateTimeField(null=True, blank=True)
+    n = models.TextField(blank=True)  # notas
 
     def __str__(self):
-        return f"OT #{self.pk} - {self.estado} ({self.prioridad})"
+        return f"#{self.pk}:{self.st}"
+
+
+class Repuesto(models.Model):
+    """repuestos/inventario."""
+
+    cod = models.CharField(max_length=20, unique=True)
+    nom = models.CharField(max_length=100)
+    stock = models.IntegerField(default=0)
+    min = models.IntegerField(default=5)  # stock minimo
+    eq = models.ForeignKey(Eq, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.cod}:{self.stock}"
+
+
+class Proveedor(models.Model):
+    """proveedores."""
+
+    nom = models.CharField(max_length=100)
+    rut = models.CharField(max_length=12, unique=True)
+    tel = models.CharField(max_length=20)
+    rating = models.IntegerField(default=3)  # 1-5
+
+    def __str__(self):
+        return self.nom
+
+
+class Inspeccion(models.Model):
+    """inspecciones/auditorias."""
+
+    eq = models.ForeignKey(Eq, on_delete=models.CASCADE)
+    tec = models.ForeignKey(Tec, on_delete=models.SET_NULL, null=True)
+    t_i = models.DateTimeField(auto_now_add=True)
+    resultado = models.JSONField(default=dict)
+    aprobado = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"insp:{self.eq.nom}:{self.aprobado}"
+
+
+class Incidente(models.Model):
+    """incidentes/fallas."""
+
+    eq = models.ForeignKey(Eq, on_delete=models.CASCADE)
+    t_i = models.DateTimeField(auto_now_add=True)
+    severidad = models.IntegerField(default=5)  # 1-10
+    desc = models.TextField()
+    resuelto = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"inc:{self.eq.nom}:sev{self.severidad}"

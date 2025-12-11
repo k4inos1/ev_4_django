@@ -8,4 +8,4 @@ class ConfApi(AppConfig):
     name = "api"
 
     def ready(self):
-        import api.signals
+        pass
