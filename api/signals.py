@@ -1,19 +1,11 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from api.models import Mantenimiento
 
-from .models import OT
-from .servicios import ServOT
-
-
-@receiver(post_save, sender=OT)
-def init_ot(sender, instance, created, **kwargs):
-    """inicializa ot (hook)."""
-    if created and instance.n:
-        # sinc prioridad
-        p_old = instance.pr
-        ServOT.sinc(instance)
-
-        if instance.pr != p_old:
-            instance.save(update_fields=["pr"])
-            # print removed
-
+@receiver(post_save, sender=Mantenimiento)
+def auto_learning_hook(sender, instance, **kwargs):
+    if instance.estado == 'completado':
+        from api.servicios.ia_core import ia_sistema
+        try:
+            ia_sistema.auto_aprender(instance, {'fue_exitoso': True})
+        except: pass

@@ -219,19 +219,24 @@ class ModeloIA(models.Model):
 
     def __str__(self):
         return f"{self.nombre} v{self.version} ({self.precision_actual:.2%})"
+
+
 # Nuevos modelos para sistema IA senior
 # Agregar al final de models.py
 
+
 class AprendizajeAutomatico(models.Model):
     """Registro de aprendizaje automático del sistema"""
-    
-    mantenimiento = models.ForeignKey(Mantenimiento, on_delete=models.CASCADE, related_name="aprendizajes")
+
+    mantenimiento = models.ForeignKey(
+        Mantenimiento, on_delete=models.CASCADE, related_name="aprendizajes"
+    )
     prioridad_predicha = models.IntegerField()
     prioridad_real = models.IntegerField()
     precision_prediccion = models.FloatField()
     ajustes_aplicados = models.JSONField(default=dict)
     fecha_aprendizaje = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = "aprendizaje_automatico"
         ordering = ["-fecha_aprendizaje"]
@@ -239,13 +244,13 @@ class AprendizajeAutomatico(models.Model):
 
 class BaseConocimiento(models.Model):
     """Base de conocimiento extraída de web scraping"""
-    
+
     titulo = models.CharField(max_length=300)
     contenido = models.TextField()
     fuente_url = models.URLField(max_length=500)
     relevancia_score = models.FloatField(default=0.5)
     fecha_scraping = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = "base_conocimiento"
         ordering = ["-relevancia_score"]
@@ -253,14 +258,33 @@ class BaseConocimiento(models.Model):
 
 class Recomendacion(models.Model):
     """Recomendaciones proactivas del sistema"""
-    
-    equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="recomendaciones")
+
+    equipo = models.ForeignKey(
+        Equipo, on_delete=models.CASCADE, related_name="recomendaciones"
+    )
+
+    TIPO_MANTENIMIENTO = "mantenimiento"
+    TIPO_ALERTA = "alerta"
+    TIPO_COSTO = "costo"
+
+    PRIORIDAD_ALTA = 3
+    PRIORIDAD_MEDIA = 2
+    PRIORIDAD_BAJA = 1
+    PRIORIDAD_CRITICA = 4
+
     titulo = models.CharField(max_length=200)
+    tipo = models.CharField(max_length=20, default=TIPO_MANTENIMIENTO)
+    prioridad = models.IntegerField(default=PRIORIDAD_MEDIA)
+    accion_sugerida = models.CharField(max_length=200, blank=True)
+    fecha_estimada = models.DateTimeField(null=True, blank=True)
+    ahorro_estimado = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
     descripcion = models.TextField()
     confianza = models.FloatField()
     vista = models.BooleanField(default=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = "recomendacion"
         ordering = ["-confianza", "-fecha_creacion"]
@@ -268,14 +292,14 @@ class Recomendacion(models.Model):
 
 class AuditLog(models.Model):
     """Log de auditoría para todas las operaciones"""
-    
+
     usuario = models.CharField(max_length=150)
     accion = models.CharField(max_length=20)
     modelo = models.CharField(max_length=100)
     descripcion = models.TextField()
     exitoso = models.BooleanField(default=True)
     fecha = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = "audit_log"
         ordering = ["-fecha"]

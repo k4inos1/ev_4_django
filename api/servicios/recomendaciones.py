@@ -43,7 +43,7 @@ class MotorRecomendaciones:
         """Predice cuándo necesitará mantenimiento"""
         # Obtener historial
         mantenimientos = Mantenimiento.objects.filter(
-            equipo=equipo, estado="completado"
+            equipo=equipo, estado=4, fecha_completada__isnull=False  # 4 = completado
         ).order_by("-fecha_completada")[:5]
 
         if mantenimientos.count() < 2:
@@ -94,7 +94,7 @@ class MotorRecomendaciones:
         """Genera alerta para equipos críticos"""
         # Verificar si tiene mantenimientos pendientes
         pendientes = Mantenimiento.objects.filter(
-            equipo=equipo, estado="pendiente"
+            equipo=equipo, estado=1  # 1 = pendiente (ESTADO_PENDIENTE)
         ).count()
 
         if pendientes > 2:

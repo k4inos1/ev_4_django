@@ -345,3 +345,227 @@ class SistemaInteligenteViewSet(viewsets.ViewSet):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=["post"])
+    def generar_datos_prueba(self, request):
+        """Genera datos aleatorios de prueba"""
+        import random
+        from datetime import timedelta
+        from django.utils import timezone
+        from api.models import Equipo, Mantenimiento, Recurso, Evento
+        from api.servicios import motor_recomendaciones
+
+        cantidad = request.data.get("cantidad", 10)
+        equipos_creados = 0
+        mantenimientos_creados = 0
+        recursos_creados = 0
+        eventos_creados = 0
+        empresas = [
+            "Industrial Solutions",
+            "Process Automation",
+            "Manufacturing Excellence",
+            "Tech Industries",
+        ]
+
+        # 1. Generar Equipos
+        for i in range(cantidad):
+            eq = Equipo.objects.create(
+                nombre=f"Equipo-{random.randint(1000,9999)}",
+                empresa_nombre=random.choice(empresas),
+                categoria=random.randint(1, 5),
+                numero_serie=f"SN-{random.randint(100000,999999)}",
+                ubicacion=f"Planta {random.randint(1,5)} - Sector {random.choice(['A','B','C'])}",
+                es_critico=random.choice([True, False]),
+                estado=random.choice(["operativo", "mantenimiento", "detenido"]),
+                fecha_instalacion=timezone.now()
+                - timedelta(days=random.randint(30, 1000)),
+            )
+            equipos_creados += 1
+
+            # 2. Generar Mantenimientos
+            for j in range(random.randint(1, 3)):
+                Mantenimiento.objects.create(
+                    equipo=eq,
+                    descripcion=f"Mantenimiento {random.choice(['preventivo','correctivo','inspección'])}",
+                    tipo=random.choice(["preventivo", "correctivo", "inspeccion"]),
+                    prioridad=random.randint(10, 100),
+                    estado=(
+                        estado_mant := random.choice([1, 2, 4])
+                    ),  # Pendiente, En Progreso, Completado
+                    fecha_programada=timezone.now()
+                    + timedelta(days=random.randint(1, 90)),
+                    fecha_completada=(
+                        timezone.now() - timedelta(days=random.randint(1, 30))
+                        if estado_mant == 4
+                        else None
+                    ),
+                    tecnico_asignado=f"Técnico-{random.randint(1,10)}",
+                    costo=random.uniform(100.0, 5000.0),
+                )
+                mantenimientos_creados += 1
+
+            # 3. Generar Eventos (70% prob)
+            if random.random() > 0.3:
+                Evento.objects.create(
+                    tipo=random.choice(
+                        [
+                            Evento.TIPO_INCIDENTE,
+                            Evento.TIPO_TELEMETRIA,
+                            Evento.TIPO_FLUJO,
+                        ]
+                    ),
+                    equipo=eq,
+                    severidad=random.randint(1, 10),
+                    descripcion=f"Evento simulado para {eq.nombre}: {random.choice(['Alta temperatura', 'Vibración excesiva', 'Pérdida de presión', 'Voltaje inestable'])}",
+                    resuelto=random.choice([True, False]),
+                )
+                eventos_creados += 1
+
+            # 4. Trigger Recomendaciones
+            try:
+                motor_recomendaciones.generar_recomendaciones_equipo(eq.id)
+            except Exception:
+                pass
+
+        # 5. Generar Recursos (Independientes)
+        tipos_recurso = [
+            Recurso.TIPO_REPUESTO,
+            Recurso.TIPO_TECNICO,
+            Recurso.TIPO_PROVEEDOR,
+        ]
+        for _ in range(cantidad):
+            tipo = random.choice(tipos_recurso)
+            nombre = ""
+            stock = 0
+            especialidad = ""
+            contacto = ""
+
+            if tipo == Recurso.TIPO_REPUESTO:
+                nombre = f"Repuesto {random.choice(['Filtro', 'Válvula', 'Sensor', 'Rodamiento'])} {random.randint(1,100)}"
+                stock = random.randint(0, 50)
+            elif tipo == Recurso.TIPO_TECNICO:
+                nombre = f"Técnico {random.choices(['Juan', 'Ana', 'Carlos', 'Maria'], k=1)[0]} {random.randint(1,99)}"
+                especialidad = random.choice(["Eléctrico", "Mecánico", "Hidráulico"])
+            elif tipo == Recurso.TIPO_PROVEEDOR:
+                nombre = f"Proveedor {random.choice(['Global', 'Tech', 'Servicios', 'Industrial'])} SA"
+                contacto = "contacto@proveedor.com"
+
+            Recurso.objects.create(
+                nombre=nombre if nombre else f"Recurso-{random.randint(100,999)}",
+                tipo=tipo,
+                stock=stock,
+                stock_minimo=5,
+                especialidad=especialidad,
+                contacto=contacto,
+                disponible=True,
+            )
+            recursos_creados += 1
+
+        return Response(
+            {
+                "mensaje": f"Generación completada: {equipos_creados} equipos, {mantenimientos_creados} mant., {recursos_creados} recursos, {eventos_creados} eventos.",
+                "detalles": {
+                    "equipos": equipos_creados,
+                    "mantenimientos": mantenimientos_creados,
+                    "recursos": recursos_creados,
+                    "eventos": eventos_creados,
+                },
+            }
+        )
+
+    @action(detail=False, methods=["post"])
+    def reset_database(self, request):
+        """Reset completo de la base de datos"""
+        from api.models import (
+            Equipo,
+            Mantenimiento,
+            Recurso,
+            Evento,
+            AprendizajeAutomatico,
+            BaseConocimiento,
+            Recomendacion,
+        )
+
+        counts = {
+            "equipos": Equipo.objects.count(),
+            "mantenimientos": Mantenimiento.objects.count(),
+            "recursos": Recurso.objects.count(),
+            "eventos": Evento.objects.count(),
+        }
+
+        Equipo.objects.all().delete()
+        Mantenimiento.objects.all().delete()
+        Recurso.objects.all().delete()
+        Evento.objects.all().delete()
+        AprendizajeAutomatico.objects.all().delete()
+        BaseConocimiento.objects.all().delete()
+        Recomendacion.objects.all().delete()
+
+        return Response({"mensaje": "BD reseteada completamente", "eliminados": counts})
+
+    @action(detail=False, methods=["post"])
+    def reset_ia(self, request):
+        """Reset del conocimiento de IA"""
+        from api.models import AprendizajeAutomatico, BaseConocimiento
+
+        aprendizajes = AprendizajeAutomatico.objects.count()
+        conocimiento = BaseConocimiento.objects.count()
+
+        AprendizajeAutomatico.objects.all().delete()
+        BaseConocimiento.objects.all().delete()
+
+        return Response(
+            {
+                "mensaje": "Conocimiento IA reseteado",
+                "aprendizajes_eliminados": aprendizajes,
+                "conocimiento_eliminado": conocimiento,
+            }
+        )
+
+    @action(detail=False, methods=["post"])
+    def entrenar(self, request):
+        """Entrena el sistema IA con los datos actuales"""
+        try:
+            # Entrenar con todos los mantenimientos completados
+            mantenimientos = Mantenimiento.objects.filter(
+                estado=4
+            )  # 4 = completado (ESTADO_COMPLETADO)
+
+            if mantenimientos.count() == 0:
+                return Response(
+                    {
+                        "mensaje": "No hay mantenimientos completados para entrenar",
+                        "entrenados": 0,
+                    }
+                )
+
+            entrenados = 0
+            from api.servicios.ia_core import ia_sistema
+
+            for mant in mantenimientos:
+                try:
+                    # Datos para aprendizaje
+                    dias = (mant.fecha_completada - mant.fecha_programada).days
+                    resultado = {
+                        "fue_exitoso": True,
+                        "dias_resolucion": max(1, dias),
+                        "costo_real": float(mant.costo),
+                        "costo_esperado": float(mant.costo) * 1.1,  # Estimación
+                    }
+
+                    # Entrenar IA
+                    ia_sistema.aprender_de_resultado(mant, resultado)
+                    entrenados += 1
+                except Exception:
+                    pass
+
+            return Response(
+                {
+                    "mensaje": f"IA entrenada con {entrenados} mantenimientos (Estado: COMPLETADO)",
+                    "entrenados": entrenados,
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

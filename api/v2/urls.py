@@ -4,7 +4,8 @@ API v2 - Features avanzadas
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from api.views import (
     EquipoViewSet,
@@ -16,6 +17,7 @@ from api.views_sistema import SistemaInteligenteViewSet
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def recomendaciones_list(request):
     """Lista de recomendaciones (v2)"""
     from api.models import Recomendacion
@@ -27,6 +29,7 @@ def recomendaciones_list(request):
 
 
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def generar_recomendaciones(request):
     """Generar recomendaciones automáticamente"""
     from api.servicios.recomendaciones import motor_recomendaciones

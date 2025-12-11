@@ -20,16 +20,9 @@ class ApiConfig(AppConfig):
         """Inicializa todo el sistema automaticamente"""
         try:
             from api.servicios.ia_core import ia_sistema
-            from api.models import ModeloIA
 
-            # Crear/verificar modelo IA
-            ModeloIA.objects.get_or_create(
-                nombre="EV4-ML-Model",
-                defaults={"version": "1.0.0", "estado": "idle", "activo": True},
-            )
-
-            # Cargar sistema IA
+            # Solo cargar sistema IA (sin acceso a BD)
             ia_sistema.obtener_estadisticas()
 
-        except Exception as e:
-            print(f"Error init: {e}")
+        except Exception:
+            pass  # Silencioso

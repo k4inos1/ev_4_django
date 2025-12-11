@@ -23,16 +23,27 @@ router.register(r"eventos", EventoViewSet, basename="evento")
 
 # Dashboard
 router.register(r"db", DatabaseExplorerViewSet, basename="db-explorer")
+
+# Dashboard IA
+from .views_dashboard import IADashboardViewSet
+
 router.register(r"ia-dashboard", IADashboardViewSet, basename="ia-dashboard")
 
 # Sistema Inteligente (Principal)
 router.register(r"sistema", SistemaInteligenteViewSet, basename="sistema-inteligente")
 
-urlpatterns = [`n    path("v1/", include("api.v1.urls")),`n    path("v2/", include("api.v2.urls")),
-    # API endpoints
+# Analytics y Consultas
+from .views_analytics import AnalyticsViewSet
+
+router.register(r"analytics", AnalyticsViewSet, basename="analytics")
+
+urlpatterns = [
+    # API versionada
+    path("v1/", include("api.v1.urls")),
+    path("v2/", include("api.v2.urls")),
+    # API sin versión (redirect a v1)
     path("", include(router.urls)),
-    # Documentacion con ReDoc
+    # Documentacion
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
-

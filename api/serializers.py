@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from .models import Equipo, Mantenimiento, Recurso, Evento, DatoEntrenamiento, ModeloIA
+from .models import (
+    Equipo,
+    Mantenimiento,
+    Recurso,
+    Evento,
+    DatoEntrenamiento,
+    ModeloIA,
+    Recomendacion,
+)
 
 
 class EquipoSerializer(serializers.ModelSerializer):
@@ -60,6 +68,8 @@ class ModeloIASerializer(serializers.ModelSerializer):
     class Meta:
         model = ModeloIA
         fields = "__all__"
+
+
 from rest_framework import serializers
 from .models import DatoEntrenamiento, ModeloIA
 
@@ -84,8 +94,9 @@ class ModeloIASerializer(serializers.ModelSerializer):
         model = ModeloIA
         fields = "__all__"
 
+
 # Serializers para nuevos modelos
 class RecomendacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recomendacion
-        fields = '__all__'
+        fields = "__all__"
