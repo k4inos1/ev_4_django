@@ -15,4 +15,5 @@ def init_ot(sender, instance, created, **kwargs):
 
         if instance.pr != p_old:
             instance.save(update_fields=["pr"])
-            print(f"[IA] OT#{instance.pk} :: {p_old}->{instance.pr}")
+            # print removed
+

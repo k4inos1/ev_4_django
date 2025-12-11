@@ -95,7 +95,7 @@ class ServicioIA:
         timestamp = datetime.now().strftime("[%H:%M:%S]")
         log_msg = f"{timestamp} {mensaje}"
         ServicioIA._training_state["logs"].append(log_msg)
-        print(log_msg)
+        # print removed
 
     @staticmethod
     def _update_step(step_id: int, status: str):
@@ -289,3 +289,4 @@ class ServicioIA:
             "logs": ServicioIA._training_state["logs"],
             "pipeline_steps": ServicioIA._training_state["pipeline_steps"],
         }
+
