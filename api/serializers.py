@@ -1,43 +1,62 @@
 from rest_framework import serializers
-from .models import Emp, Eq, Tec, PM, OT
+from .models import Equipo, Mantenimiento, Recurso, Evento, DatoEntrenamiento, ModeloIA
 
 
-class SerBase(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        pass
+class EquipoSerializer(serializers.ModelSerializer):
+    categoria_display = serializers.CharField(
+        source="get_categoria_display", read_only=True
+    )
 
-
-# Evitamos sobre-ingenieria.
-# Usamos el patron de Vistas: variables cortas.
-# En Serializers, 'model' en Meta es requerido.
-
-
-class SerEmp(SerBase):
     class Meta:
-        model = Emp
+        model = Equipo
         fields = "__all__"
 
 
-class SerEq(SerBase):
+class MantenimientoSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+    prioridad_display = serializers.CharField(
+        source="get_prioridad_display", read_only=True
+    )
+    estado_display = serializers.CharField(source="get_estado_display", read_only=True)
+    equipo_nombre = serializers.CharField(source="equipo.nombre", read_only=True)
+
     class Meta:
-        model = Eq
+        model = Mantenimiento
         fields = "__all__"
 
 
-class SerTec(SerBase):
+class RecursoSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+    necesita_reposicion = serializers.BooleanField(read_only=True)
+
     class Meta:
-        model = Tec
+        model = Recurso
         fields = "__all__"
 
 
-class SerPM(SerBase):
+class EventoSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+    equipo_nombre = serializers.CharField(
+        source="equipo.nombre", read_only=True, allow_null=True
+    )
+
     class Meta:
-        model = PM
+        model = Evento
         fields = "__all__"
 
 
-class SerOT(SerBase):
+class DatoEntrenamientoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OT
+        model = DatoEntrenamiento
+        fields = "__all__"
+
+
+class ModeloIASerializer(serializers.ModelSerializer):
+    precision_porcentaje = serializers.SerializerMethodField()
+
+    def get_precision_porcentaje(self, obj):
+        return f"{obj.precision_actual * 100:.2f}%"
+
+    class Meta:
+        model = ModeloIA
         fields = "__all__"
