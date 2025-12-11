@@ -28,10 +28,11 @@ router.register(r"ia-dashboard", IADashboardViewSet, basename="ia-dashboard")
 # Sistema Inteligente (Principal)
 router.register(r"sistema", SistemaInteligenteViewSet, basename="sistema-inteligente")
 
-urlpatterns = [
+urlpatterns = [`n    path("v1/", include("api.v1.urls")),`n    path("v2/", include("api.v2.urls")),
     # API endpoints
     path("", include(router.urls)),
     # Documentacion con ReDoc
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
+

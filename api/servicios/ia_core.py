@@ -359,3 +359,27 @@ class SistemaIA:
 
 # Instancia global única
 ia_sistema = SistemaIA()
+# Auto-learning methods para ia_core.py
+
+def auto_aprender(self, mantenimiento, resultado):
+    """Aprendizaje automático sin intervención"""
+    from api.models import AprendizajeAutomatico
+    
+    prioridad_predicha = mantenimiento.prioridad
+    prioridad_real = resultado.get('prioridad_real', prioridad_predicha)
+    precision = 1.0 - abs(prioridad_predicha - prioridad_real) / 100.0
+    
+    fue_exitoso = resultado.get('fue_exitoso', True)
+    recompensa = 1.0 if fue_exitoso else -0.5
+    
+    ajustes = {'learning_rate': self.learning_rate}
+    
+    aprendizaje = AprendizajeAutomatico.objects.create(
+        mantenimiento=mantenimiento,
+        prioridad_predicha=prioridad_predicha,
+        prioridad_real=prioridad_real,
+        precision_prediccion=precision,
+        ajustes_aplicados=ajustes
+    )
+    
+    return {'precision': precision, 'recompensa': recompensa}
