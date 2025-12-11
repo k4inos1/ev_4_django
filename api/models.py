@@ -219,3 +219,63 @@ class ModeloIA(models.Model):
 
     def __str__(self):
         return f"{self.nombre} v{self.version} ({self.precision_actual:.2%})"
+# Nuevos modelos para sistema IA senior
+# Agregar al final de models.py
+
+class AprendizajeAutomatico(models.Model):
+    """Registro de aprendizaje automático del sistema"""
+    
+    mantenimiento = models.ForeignKey(Mantenimiento, on_delete=models.CASCADE, related_name="aprendizajes")
+    prioridad_predicha = models.IntegerField()
+    prioridad_real = models.IntegerField()
+    precision_prediccion = models.FloatField()
+    ajustes_aplicados = models.JSONField(default=dict)
+    fecha_aprendizaje = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = "aprendizaje_automatico"
+        ordering = ["-fecha_aprendizaje"]
+
+
+class BaseConocimiento(models.Model):
+    """Base de conocimiento extraída de web scraping"""
+    
+    titulo = models.CharField(max_length=300)
+    contenido = models.TextField()
+    fuente_url = models.URLField(max_length=500)
+    relevancia_score = models.FloatField(default=0.5)
+    fecha_scraping = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = "base_conocimiento"
+        ordering = ["-relevancia_score"]
+
+
+class Recomendacion(models.Model):
+    """Recomendaciones proactivas del sistema"""
+    
+    equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="recomendaciones")
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    confianza = models.FloatField()
+    vista = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = "recomendacion"
+        ordering = ["-confianza", "-fecha_creacion"]
+
+
+class AuditLog(models.Model):
+    """Log de auditoría para todas las operaciones"""
+    
+    usuario = models.CharField(max_length=150)
+    accion = models.CharField(max_length=20)
+    modelo = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    exitoso = models.BooleanField(default=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = "audit_log"
+        ordering = ["-fecha"]
