@@ -1,5 +1,10 @@
 # EV4 Django - API Inteligente de Mantenimiento
 
+[![Django](https://img.shields.io/badge/Django-5.1-green.svg)](https://www.djangoproject.com/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![DRF](https://img.shields.io/badge/DRF-3.15-red.svg)](https://www.django-rest-framework.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > Sistema de gestión de mantenimiento industrial con IA, Reinforcement Learning y Web Scraping
 
 ## Características
