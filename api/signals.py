@@ -1,19 +1,18 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 from .models import OT
-from .services import ServIA
+from .servicios import ServOT
 
 
 @receiver(post_save, sender=OT)
-def crear_ot(sender, instance, created, **kwargs):
-    """
-    Al Crear (crear_ot). Usa ServIA.
-    """
-    if created and instance.notas:
-        # Calc P
-        p_a = ServIA.calc_p(instance.notas)
+def init_ot(sender, instance, created, **kwargs):
+    """inicializa ot (hook)."""
+    if created and instance.n:
+        # sinc prioridad
+        p_old = instance.pr
+        ServOT.sinc(instance)
 
-        if p_a != instance.prioridad:
-            instance.prioridad = p_a
-            instance.save(update_fields=["prioridad"])
-            print(f"[IA] Act OT {instance.id} -> {p_a}")
+        if instance.pr != p_old:
+            instance.save(update_fields=["pr"])
+            print(f"[IA] OT#{instance.pk} :: {p_old}->{instance.pr}")

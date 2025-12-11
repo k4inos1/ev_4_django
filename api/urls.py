@@ -1,48 +1,49 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
+
 from .views import (
-    EmpVS,
-    EqVS,
-    TecVS,
-    PMVS,
-    OTVS,
-    ResumenVS,
+    EquipoViewSet,
+    MantenimientoViewSet,
+    RecursoViewSet,
+    EventoViewSet,
+    DatabaseExplorerViewSet,
+    IADashboardViewSet,
+)
+from .views_ia import DatoEntrenamientoViewSet, EntrenamientoIAViewSet
+from .views_sistema import SistemaInteligenteViewSet
+
+# Router para endpoints de la API
+router = DefaultRouter()
+
+# Endpoints principales
+router.register(r"equipos", EquipoViewSet, basename="equipo")
+router.register(r"mantenimientos", MantenimientoViewSet, basename="mantenimiento")
+router.register(r"recursos", RecursoViewSet, basename="recurso")
+router.register(r"eventos", EventoViewSet, basename="evento")
+
+# Dashboard endpoints
+router.register(r"db", DatabaseExplorerViewSet, basename="db-explorer")
+router.register(r"ia-dashboard", IADashboardViewSet, basename="ia-dashboard")
+
+# IA endpoints (legacy - mantener compatibilidad)
+router.register(r"ia/datos", DatoEntrenamientoViewSet, basename="dato-entrenamiento")
+router.register(
+    r"ia/entrenamiento", EntrenamientoIAViewSet, basename="entrenamiento-ia"
 )
 
-ruteador = DefaultRouter()
-ruteador.register(r"emp", EmpVS, basename="emp")
-ruteador.register(r"eq", EqVS, basename="eq")
-ruteador.register(r"tec", TecVS, basename="tec")
-ruteador.register(r"pm", PMVS, basename="pm")
-ruteador.register(r"ot", OTVS, basename="ot")
-ruteador.register(r"resumen", ResumenVS, basename="resumen")
+# RL endpoints (legacy)
+router.register(r"rl", ReinforcementLearningViewSet, basename="reinforcement-learning")
 
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
-
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularJSONView,
-    SpectacularSwaggerView,
-    SpectacularRedocView,
+# Sistema Inteligente Unificado (NUEVO - recomendado)
+router.register(
+    r"inteligente", SistemaInteligenteViewSet, basename="sistema-inteligente"
 )
 
 urlpatterns = [
-    path("api/", include(ruteador.urls)),
-    # Documentacion
+    # API endpoints
+    path("", include(router.urls)),
+    # Documentación con ReDoc
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("schema/json/", SpectacularJSONView.as_view(), name="schema-json"),
-    path(
-        "schema/swagger/",
-        SpectacularSwaggerView.as_view(url_name="schema-json"),
-        name="swagger-ui",
-    ),
-    path(
-        "schema/redoc/",
-        SpectacularRedocView.as_view(url_name="schema-json"),
-        name="redoc",
-    ),
+    path("docs/", SpectacularRedocView.as_view(url_name="schema"), name="api-docs"),
 ]

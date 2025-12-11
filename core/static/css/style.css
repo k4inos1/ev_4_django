@@ -1,0 +1,101 @@
+:root {
+    --bg: #050505;
+    --fg: #00ff00;
+    --err: #ff0000;
+    --dim: #444;
+    --p: "Consolas", "Monospace";
+}
+
+body.x_body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--p);
+    margin: 0;
+    padding: 20px;
+    background-image: linear-gradient(rgba(0, 20, 0, 0.1) 1px, transparent 1px);
+    background-size: 100% 3px;
+}
+
+.x_head {
+    border-bottom: 2px solid var(--fg);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.fr { float: right; }
+.t_w { color: #fff; }
+.t_r { color: var(--err); }
+
+.x_grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-gap: 20px;
+}
+
+.x_pan {
+    border: 1px solid var(--dim);
+    padding: 10px;
+    background: #000;
+}
+
+canvas#c_n {
+    width: 100%;
+    height: 300px;
+    background: #001100;
+    border: 1px dashed var(--dim);
+}
+
+button.b_act {
+    width: 100%;
+    background: var(--fg);
+    color: #000;
+    border: none;
+    padding: 10px;
+    font-family: var(--p);
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+button.b_act:hover { background: #fff; }
+
+.t_term {
+    height: 150px;
+    overflow-y: auto;
+    font-size: 0.8em;
+    color: #ccc;
+    border-top: 1px solid var(--dim);
+    padding-top: 5px;
+}
+
+.bar_c {
+    background: #222;
+    height: 20px;
+    width: 100%;
+}
+.bar_v {
+    background: var(--fg);
+    height: 100%;
+    transition: width 0.2s;
+}
+
+.cli_prompt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 5px;
+    background: #000;
+    border: 1px solid var(--dim);
+}
+
+.cli_input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    font-family: var(--p);
+    font-size: 0.9em;
+    outline: none;
+}

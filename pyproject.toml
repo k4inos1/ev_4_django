@@ -1,0 +1,30 @@
+[project]
+name = "ev_4_django"
+version = "2.0.0"
+description = "Sistema de Mantenimiento EV4 (Distro-Grade)"
+authors = [{name = "Maintainer", email = "maintainer@linux.distro"}]
+
+[tool.ruff]
+# Longitud de linea estricta
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+# E: errores pycodestyle
+# W: advertencias pycodestyle
+# F: pyflakes
+# I: isort (orden imports)
+# B: flake8-bugbear (bugs logicos)
+# UP: pyupgrade (sintaxis moderna)
+select = ["E", "W", "F", "I", "B", "UP"]
+ignore = []
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--strict-markers --tb=short"
+testpaths = ["api/tests"]
