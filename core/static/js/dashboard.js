@@ -394,37 +394,107 @@ async function loadIAControl() {
 }
 
 async function loadAnalytics() {
-    const [criticos, conocimiento, predicciones] = await Promise.all([
+    const [criticos, predicciones, inventario] = await Promise.all([
         fetch('/api/analytics/equipos_criticos/').then(r => r.json()),
-        fetch('/api/analytics/conocimiento_web/').then(r => r.json()),
-        fetch('/api/analytics/predicciones_ia/').then(r => r.json())
+        fetch('/api/analytics/prediccion_fallas/').then(r => r.json()),
+        fetch('/api/analytics/analitica_inventario/').then(r => r.json())
     ]);
 
     const html = `
-        <h2 class="section-title">Analytics y Consultas</h2>
+    const html = `
+        < div style = "display:flex; justify-content:space-between; align-items:center;" >
+             <h2 class="section-title"><i class="fas fa-chart-line"></i> Analytics & Predicciones IA</h2>
+             <button class="control-btn" onclick="runAutomata()" style="background:var(--secondary);">
+                <i class="fas fa-robot"></i> Ejecutar Autómata
+             </button>
+        </div >
         
-        <div class="table-container">
-            <div class="table-header">
-                <h3>Equipos Críticos con Mantenimientos Pendientes</h3>
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-title">Equipos en Riesgo</div>
+                <div class="card-value" style="color:#ff6b6b;">${predicciones.equipos_riesgo?.length || 0}</div>
+                <div class="card-subtitle">Análisis Predictivo Fallas</div>
             </div>
+            <div class="card">
+                <div class="card-title">Alertas de Stock</div>
+                <div class="card-value" style="color:#ff9f40;">${inventario.sugerencias?.length || 0}</div>
+                <div class="card-subtitle">Optimización Inventario</div>
+            </div>
+        </div>
+
+        <div class="dashboard-header" style="grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
+            
+            <!-- Tabla Riesgo Fallas -->
+            <div class="table-container">
+                <div class="table-header">
+                     <h3><i class="fas fa-exclamation-triangle"></i> Predicción de Fallas (MTBF)</h3>
+                </div>
+                <table class="table-compact">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Riesgo</th>
+                            <th>MTBF (días)</th>
+                            <th>Prox. Falla</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${predicciones.equipos_riesgo?.map(e => `
+                            <tr>
+                                <td>${e.nombre}</td>
+                                <td><span class="badge ${e.riesgo === 'Crítico' ? 'badge-error' : 'badge-warning'}">${e.riesgo}</span></td>
+                                <td>${e.mtbf_dias}</td>
+                                <td><strong>${e.dias_prox_falla} días</strong></td>
+                            </tr>
+                        `).join('') || '<tr><td colspan="4" style="text-align: center;">Sin riesgos inminentes detectados.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabla Optimización Inventario -->
+            <div class="table-container">
+                <div class="table-header">
+                     <h3><i class="fas fa-boxes"></i> Inteligencia de Inventario</h3>
+                </div>
+                <table class="table-compact">
+                    <thead>
+                        <tr>
+                            <th>Recurso</th>
+                            <th>Stock</th>
+                            <th>Acción IA</th>
+                            <th>Sugerido</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${inventario.sugerencias?.map(s => `
+                            <tr>
+                                <td>${s.nombre}</td>
+                                <td>${s.stock_actual}</td>
+                                <td style="color:${s.estado === 'Crítico' ? '#ff6b6b' : '#ff9f40'}">${s.accion}</td>
+                                <td>+${s.cantidad_sugerida}</td>
+                            </tr>
+                        `).join('') || '<tr><td colspan="4" style="text-align: center;">Inventario optimizado.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!--Equipos Críticos(Legacy View)-- >
+        <h3 class="section-title" style="margin-top:30px;">Equipos Críticos (Mantenimientos Pend.)</h3>
+        <div class="table-container">
             <table>
                 <thead>
-                    <tr>
-                        <th>Equipo</th>
-                        <th>Empresa</th>
-                        <th>Pendientes</th>
-                        <th>Prioridad Promedio</th>
-                    </tr>
+                    <tr><th>Equipo</th><th>Empresa</th><th>Pendientes</th><th>Prioridad</th></tr>
                 </thead>
                 <tbody>
-                    ${criticos.equipos?.slice(0, 10).map(eq => `
+                    ${criticos.equipos?.slice(0, 5).map(eq => `
                         <tr>
                             <td>${eq.nombre}</td>
                             <td>${eq.empresa}</td>
                             <td><span class="badge badge-warning">${eq.mantenimientos_pendientes}</span></td>
                             <td>${eq.prioridad_maxima.toFixed(1)}</td>
                         </tr>
-                    `).join('') || '<tr><td colspan="4" style="text-align: center; padding: 40px;">No hay equipos críticos</td></tr>'}
+                    `).join('') || '<tr><td colspan="4" style="text-align: center;">Sin data crítica legacy.</td></tr>'}
                 </tbody>
             </table>
         </div>
@@ -442,13 +512,13 @@ async function loadKnowledgeData() {
         if (!tbody) return;
 
         tbody.innerHTML = data.map(item => `
-            <tr>
+        < tr >
                 <td><input type="checkbox" class="k-check" value="${item.id}"></td>
                 <td><strong>${item.titulo}</strong></td>
                 <td><a href="${item.fuente}" target="_blank" style="color:#4bc0c0;">Enlace</a></td>
                 <td>${new Date(item.fecha).toLocaleString()}</td>
                 <td>${item.resumen}</td>
-            </tr>
+            </tr >
         `).join('') || '<tr><td colspan="5" style="text-align:center;">Sin datos recopilados</td></tr>';
     } catch (e) {
         console.error(e);
@@ -476,22 +546,22 @@ async function previewDataGeneration(qty) {
 
         let html = '<table class="table-compact"><thead><tr><th>Equipo</th><th>Mantenimiento (IA Generated)</th><th>Costo Est.</th></tr></thead><tbody>';
         data.mantenimientos.slice(0, 10).forEach(m => {
-            html += `<tr>
+            html += `< tr >
                 <td>${m.equipo}</td>
                 <td>${m.descripcion}</td>
                 <td>$${m.costo.toFixed(2)}</td>
-            </tr>`;
+            </tr > `;
         });
         html += '</tbody></table>';
 
         if (data.mantenimientos.length > 10) {
-            html += `<p style="text-align:center; color:#888;">... y ${data.mantenimientos.length - 10} más</p>`;
+            html += `< p style = "text-align:center; color:#888;" >... y ${ data.mantenimientos.length - 10 } más</p > `;
         }
 
         content.innerHTML = html;
 
     } catch (e) {
-        content.innerHTML = `<div class="error-text">Error: ${e.message}</div>`;
+        content.innerHTML = `< div class="error-text" > Error: ${ e.message }</div > `;
     }
 }
 
@@ -506,7 +576,7 @@ async function deleteSelectedKnowledge() {
     const selected = Array.from(document.querySelectorAll('.k-check:checked')).map(cb => cb.value);
     if (selected.length === 0) return alert("Seleccione items para eliminar");
 
-    if (confirm(`¿Eliminar ${selected.length} elementos de conocimiento?`)) {
+    if (confirm(`¿Eliminar ${ selected.length } elementos de conocimiento ? `)) {
         try {
             const res = await fetch('/api/sistema/gestionar_conocimiento/', {
                 method: 'POST',
@@ -531,7 +601,7 @@ async function loadVisualizer() {
     } catch (e) { console.error("Error stats", e); }
 
     const html = `
-        <h2 class="section-title">Visualizador: Flujo de Aprendizaje IA</h2>
+        < h2 class="section-title" > Visualizador: Flujo de Aprendizaje IA</h2 >
         <div class="pipeline-container">
             <!-- Step 1: Input / Scraping -->
             <div class="pipeline-step" id="step-1">
@@ -588,13 +658,13 @@ async function loadVisualizer() {
             </div>
         </div>
 
-        <!-- Knowledge Detail Modal -->
+        <!--Knowledge Detail Modal-- >
         <div id="knowledge-modal" style="display:none;" class="modal-overlay">
             <div class="modal-content">
                 <h3>Gestionar Conocimiento Recopilado</h3>
                 <div class="table-actions">
-                     <button class="btn danger" onclick="deleteSelectedKnowledge()">Eliminar Seleccionados</button>
-                     <button class="btn" onclick="closeKnowledgeModal()">Cerrar</button>
+                    <button class="btn danger" onclick="deleteSelectedKnowledge()">Eliminar Seleccionados</button>
+                    <button class="btn" onclick="closeKnowledgeModal()">Cerrar</button>
                 </div>
                 <div id="knowledge-table-container"></div>
             </div>
@@ -613,7 +683,7 @@ async function openKnowledgeModal() {
     const data = await res.json();
 
     document.getElementById('knowledge-table-container').innerHTML = `
-        <table class="table-compact" style="margin-top:10px;">
+        < table class="table-compact" style = "margin-top:10px;" >
             <thead><tr><th>Sel</th><th>Título</th><th>Fuente</th><th>Resumen</th></tr></thead>
             <tbody>
                 ${data.map(k => `<tr>
@@ -623,8 +693,8 @@ async function openKnowledgeModal() {
                     <td>${k.resumen.substring(0, 50)}...</td>
                 </tr>`).join('')}
             </tbody>
-        </table>
-    `;
+        </table >
+        `;
 }
 
 function closeKnowledgeModal() {
@@ -666,12 +736,12 @@ async function previewDataGenerationViz() {
 
         let html = '';
         data.equipos.slice(0, 5).forEach(e => {
-            html += `<div class="data-chip temp">
+            html += `< div class="data-chip temp" >
                 <strong>Propuesta: ${e.nombre}</strong>
                 <small>Cat: ${e.categoria} | Basado en conocimiento previo</small>
-            </div>`;
+            </div > `;
         });
-        html += `<div style="text-align:center; font-style:italic; color:#888;">+ ${data.equipos.length - 5} items más...</div>`;
+        html += `< div style = "text-align:center; font-style:italic; color:#888;" > + ${ data.equipos.length - 5 } items más...</div > `;
         p3.innerHTML = html;
 
         // Show modal as well for full details
@@ -684,7 +754,7 @@ async function previewDataGenerationViz() {
 
 
 async function generarDatos(cantidad) {
-    if (confirm(`Generar ${cantidad} datos aleatorios?`)) {
+    if (confirm(`Generar ${ cantidad } datos aleatorios ? `)) {
         try {
             const response = await fetch('/api/sistema/generar_datos_prueba/', {
                 method: 'POST',
@@ -716,7 +786,7 @@ async function generarRecomendaciones() {
     try {
         const response = await fetch('/api/v2/recomendaciones/generar/', { method: 'POST' });
         const result = await response.json();
-        alert(`${result.total} recomendaciones generadas`);
+        alert(`${ result.total } recomendaciones generadas`);
         loadTabContent(currentTab);
     } catch (error) {
         alert('Error: ' + error.message);
@@ -750,7 +820,7 @@ async function resetDatabase() {
 }
 
 async function scrapearCategoria(categoria) {
-    if (confirm(`Iniciar aprendizaje web para categoría ${categoria}?`)) {
+    if (confirm(`Iniciar aprendizaje web para categoría ${ categoria }?`)) {
         try {
             const btn = event.target;
             const originalText = btn.innerText;
@@ -764,7 +834,7 @@ async function scrapearCategoria(categoria) {
             });
             const result = await response.json();
 
-            alert(`Aprendizaje completado: ${result.mensaje}\nResultados: ${result.resultados.resultados_encontrados}`);
+            alert(`Aprendizaje completado: ${ result.mensaje } \nResultados: ${ result.resultados.resultados_encontrados } `);
             loadTabContent(currentTab);
 
             btn.innerText = originalText;
@@ -779,7 +849,7 @@ async function scrapearCustom() {
     const prompt = document.getElementById('custom-topic').value;
     if (!prompt) return alert("Ingrese un tema");
 
-    if (confirm(`¿Buscar e indexar información sobre: "${prompt}"?`)) {
+    if (confirm(`¿Buscar e indexar información sobre: "${prompt}" ? `)) {
         try {
             const btn = event.target;
             const originalText = btn.innerText;
@@ -793,7 +863,7 @@ async function scrapearCustom() {
             });
             const result = await response.json();
 
-            alert(`Investigación completa.\nEncontrados: ${result.resultados.resultados_encontrados}\nGuardados: ${result.resultados.conocimientos_guardados}`);
+            alert(`Investigación completa.\nEncontrados: ${ result.resultados.resultados_encontrados } \nGuardados: ${ result.resultados.conocimientos_guardados } `);
 
             btn.innerText = originalText;
             btn.disabled = false;
@@ -808,45 +878,45 @@ async function scrapearCustom() {
 
 async function loadSettings() {
     const html = `
-        <h2 class="section-title"><i class="fas fa-cog"></i> Configuración del Sistema</h2>
-        
-        <div class="ia-controls" style="grid-template-columns: 1fr;">
-            
-            <div class="control-group">
-                <h4><i class="fas fa-database"></i> Gestión de Base de Datos</h4>
-                <p style="color:#888; font-size:0.9rem; margin-bottom:15px;">
-                    Acciones administrativas destructivas. Úselas con precaución.
-                </p>
-                
-                <div class="button-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-                    <button class="control-btn danger" onclick="resetDatabase()">
-                        <div style="font-size:1.5rem; margin-bottom:10px;"><i class="fas fa-trash-alt"></i></div>
-                        <strong>Purgar Base de Datos</strong>
-                        <div style="font-size:0.75rem; margin-top:5px;">Elimina Equipos, Mant., Eventos y Recursos</div>
-                    </button>
-                    
-                    <button class="control-btn danger" onclick="resetIA()">
-                        <div style="font-size:1.5rem; margin-bottom:10px;"><i class="fas fa-brain"></i></div>
-                        <strong>Purgar Datos IA</strong>
-                        <div style="font-size:0.75rem; margin-top:5px;">Elimina solo Conocimiento y Reglas Aprendidas</div>
-                    </button>
-                </div>
-            </div>
+        < h2 class="section-title" > <i class="fas fa-cog"></i> Configuración del Sistema</h2 >
 
-            <div class="control-group">
-                <h4><i class="fas fa-info-circle"></i> Información del Sistema</h4>
-                <div class="stat-row">
-                    <span>Versión API:</span> <strong>v2.0 (Django REST)</strong>
+            <div class="ia-controls" style="grid-template-columns: 1fr;">
+
+                <div class="control-group">
+                    <h4><i class="fas fa-database"></i> Gestión de Base de Datos</h4>
+                    <p style="color:#888; font-size:0.9rem; margin-bottom:15px;">
+                        Acciones administrativas destructivas. Úselas con precaución.
+                    </p>
+
+                    <div class="button-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                        <button class="control-btn danger" onclick="resetDatabase()">
+                            <div style="font-size:1.5rem; margin-bottom:10px;"><i class="fas fa-trash-alt"></i></div>
+                            <strong>Purgar Base de Datos</strong>
+                            <div style="font-size:0.75rem; margin-top:5px;">Elimina Equipos, Mant., Eventos y Recursos</div>
+                        </button>
+
+                        <button class="control-btn danger" onclick="resetIA()">
+                            <div style="font-size:1.5rem; margin-bottom:10px;"><i class="fas fa-brain"></i></div>
+                            <strong>Purgar Datos IA</strong>
+                            <div style="font-size:0.75rem; margin-top:5px;">Elimina solo Conocimiento y Reglas Aprendidas</div>
+                        </button>
+                    </div>
                 </div>
-                <div class="stat-row">
-                    <span>Motor IA:</span> <strong>Hybrid Rule-Based / Web Learning</strong>
+
+                <div class="control-group">
+                    <h4><i class="fas fa-info-circle"></i> Información del Sistema</h4>
+                    <div class="stat-row">
+                        <span>Versión API:</span> <strong>v2.0 (Django REST)</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Motor IA:</span> <strong>Hybrid Rule-Based / Web Learning</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Estado:</span> <span class="badge badge-success">Operativo</span>
+                    </div>
                 </div>
-                <div class="stat-row">
-                    <span>Estado:</span> <span class="badge badge-success">Operativo</span>
-                </div>
+
             </div>
-            
-        </div>
     `;
 
     document.getElementById('content').innerHTML = html;

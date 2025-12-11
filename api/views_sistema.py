@@ -740,3 +740,14 @@ class SistemaInteligenteViewSet(viewsets.ViewSet):
             return Response({"error": "Acción no válida o sin IDs"}, status=400)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+    @action(detail=False, methods=["post"])
+    def ejecutar_automata(self, request):
+        """Ejecuta el ciclo de autómata (acciones autónomas)"""
+        try:
+            from api.servicios.automata import AutomataInteligente
+
+            resultado = AutomataInteligente.ejecutar_ciclo_autonomo()
+            return Response(resultado)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

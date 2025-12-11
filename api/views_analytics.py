@@ -247,13 +247,37 @@ class AnalyticsViewSet(viewsets.ViewSet):
         items = BaseConocimiento.objects.all().order_by("-fecha_scraping")[:50]
         return Response(
             [
-                {
-                    "id": i.id,
-                    "titulo": i.titulo,
-                    "fuente": i.fuente_url,
-                    "fecha": i.fecha_scraping,
-                    "resumen": i.contenido[:100] + "..." if i.contenido else "",
-                }
                 for i in items
             ]
         )
+
+    @action(detail=False, methods=["get"])
+    def prediccion_fallas(self, request):
+        """Predicción de fallas MTBF e Inteligencia Predictiva"""
+        from api.servicios.analitica_predictiva import AnaliticaPredictiva
+        
+        resultados = AnaliticaPredictiva.analizar_riesgo_equipos()
+        
+        # Filtros opcionales
+        filtrar_criticos = request.query_params.get('criticos', 'false') == 'true'
+        if filtrar_criticos:
+            resultados = [r for r in resultados if r['riesgo'] in ['Crítico', 'Alto']]
+
+        return Response({
+            "total_analizados": len(resultados),
+            "equipos_riesgo": resultados[:20]  # Top 20 riesgos
+        })
+
+    @action(detail=False, methods=["get"])
+    def analitica_inventario(self, request):
+        """Optimización de stock e inventario inteligente"""
+        from api.servicios.optimizador_inventario import OptimizadorInventario
+        
+        sugerencias = OptimizadorInventario.analizar_stock()
+        
+        return Response({
+            "total_sugerencias": len(sugerencias),
+            "ahorro_potencial_estimado": sum([s['cantidad_sugerida'] * 100 for s in sugerencias]), # Dummy value
+            "sugerencias": sugerencias
+        })
+
