@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV4 - API Inteligente Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            animation: fadeIn 0.5s;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 40px;
+            color: #333;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.5s;
+            min-height: 600px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            color: #fff;
+            transition: transform 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            opacity: 0.95;
+        }
+
+        .stat {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.85;
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        .api-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .api-link:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-active {
+            background: #4CAF50;
+        }
+
+        .status-training {
+            background: #FF9800;
+        }
+
+        .status-idle {
+            background: #9E9E9E;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 EV4 API Inteligente</h1>
+            <p>Dashboard Interactivo con IA Auto-Evolutiva</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('db')">📊 Base de Datos</button>
+            <button class="tab" onclick="showTab('ia')">🤖 Evolución IA</button>
+            <button class="tab" onclick="showTab('browser')">🔍 Explorador BD</button>
+            <button class="tab" onclick="showTab('api')">📡 API Explorer</button>
+        </div>
+
+        <div class="content" id="content">
+            <div class="loading">⏳ Cargando...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentChart = null;
+
+        async function showTab(tab) {
+            // Activar tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">⏳ Cargando datos...</div>';
+
+            try {
+                if (tab === 'db') {
+                    await showDatabaseTab(content);
+                } else if (tab === 'ia') {
+                    await showIATab(content);
+                } else if (tab === 'browser') {
+                    await showBrowserTab(content);
+                } else if (tab === 'api') {
+                    await showAPITab(content);
+                }
+            } catch (error) {
+                content.innerHTML = `<div class="loading">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function showDatabaseTab(content) {
+            const stats = await fetch('/api/db/stats/').then(r => r.json());
+
+            content.innerHTML = `
+                <h2 style="color: #667eea; margin-bottom: 30px;">📊 Estado de la Base de Datos</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>⚙️ Equipos</h3>
+                        <div class="stat">${stats.total_equipos}</div>
+                        <div class="stat-label">${stats.equipos_criticos} críticos</div>
+                    </div>
+                    <div class="card">
+                        <h3>🔧 Mantenimientos</h3>
+                        <div class="stat">${stats.total_mantenimientos}</div>
+                        <div class="stat-label">${stats.mantenimientos_pendientes} pendientes</div>
+                    </div>
+                    <div class="card">
+                        <h3>👥 Recursos</h3>
+                        <div class="stat">${stats.total_recursos}</div>
+                        <div class="stat-label">${stats.recursos_disponibles} disponibles</div>
+                    </div>
+                    <div class="card">
+                        <h3>⚠️ Eventos</h3>
+                        <div class="stat">${stats.total_eventos}</div>
+                        <div class="stat-label">${stats.eventos_no_resueltos} no resueltos</div>
+                    </div>
+                    <div class="card">
+                        <h3>🤖 Datos IA</h3>
+                        <div class="stat">${stats.total_datos_ia}</div>
+                        <div class="stat-label">${stats.datos_ia_usados} usados en entrenamiento</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function showIATab(content) {
+            const evolution = await fetch('/api/ia-dashboard/evolution/').then(r => r.json());
+            const pipeline = await fetch('/api/ia-dashboard/data_pipeline/').then(r => r.json());
+
+            const statusClass = evolution.estado === 'training' ? 'status-training' :
+                evolution.estado === 'idle' ? 'status-idle' : 'status-active';
+
+            content.innerHTML = `
+                <h2 style="color: #667eea; margin-bottom: 30px;">🤖 Evolución del Modelo de IA</h2>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span class="status-badge ${statusClass}">${evolution.estado.toUpperCase()}</span>
+                </div>
+                <div class="grid">
+                    <div class="card">
+                        <h3>🎯 Precisión Actual</h3>
+                        <div class="stat">${(evolution.precision_actual * 100).toFixed(2)}%</div>
+                    </div>
+                    <div class="card">
+                        <h3>📊 Datos de Entrenamiento</h3>
+                        <div class="stat">${evolution.datos_entrenamiento}</div>
+                    </div>
+                    <div class="card">
+                        <h3>🔄 Épocas Completadas</h3>
+                        <div class="stat">${evolution.epocas_completadas}</div>
+                    </div>
+                    <div class="card">
+                        <h3>📈 Uso de Datos</h3>
+                        <div class="stat">${pipeline.porcentaje_uso.toFixed(1)}%</div>
+                        <div class="stat-label">${pipeline.datos_usados}/${pipeline.total_datos} datos</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            `;
+
+            // Crear gráfico de evolución
+            if (currentChart) currentChart.destroy();
+
+            const ctx = document.getElementById('evolutionChart').getContext('2d');
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: evolution.historial.map((_, i) => `Época ${i + 1}`),
+                    datasets: [{
+                        label: 'Precisión del Modelo',
+                        data: evolution.historial,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: true,
+                            text: `${evolution.nombre} v${evolution.version} - Evolución de Precisión`
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                callback: function (value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function showBrowserTab(content) {
+            const tables = await fetch('/api/db/tables/').then(r => r.json());
+
+            content.innerHTML = `
+                <h2 style="color: #667eea; margin-bottom: 30px;">🔍 Explorador de Base de Datos</h2>
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-right: 10px;">Seleccionar tabla:</label>
+                    <select id="tableSelect" onchange="loadTableData()" style="padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-size: 1em;">
+                        <option value="equipo">Equipos</option>
+                        <option value="mantenimiento">Mantenimientos</option>
+                        <option value="recurso">Recursos</option>
+                        <option value="evento">Eventos</option>
+                        <option value="dato_entrenamiento">Datos IA</option>
+                        <option value="modelo_ia">Modelos IA</option>
+                    </select>
+                    <span id="recordCount" style="margin-left: 20px; font-weight: 600;"></span>
+                </div>
+                <div id="tableData" style="overflow-x: auto;"></div>
+            `;
+
+            // Cargar datos iniciales
+            window.loadTableData = async function () {
+                const table = document.getElementById('tableSelect').value;
+                const dataDiv = document.getElementById('tableData');
+                const countSpan = document.getElementById('recordCount');
+
+                dataDiv.innerHTML = '<div class="loading">⏳ Cargando datos...</div>';
+
+                try {
+                    const response = await fetch(`/api/db/browse/?table=${table}&limit=50`);
+                    const data = await response.json();
+
+                    countSpan.textContent = `Total: ${data.count} registros`;
+
+                    if (data.data.length === 0) {
+                        dataDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">No hay datos en esta tabla</p>';
+                        return;
+                    }
+
+                    // Crear tabla HTML
+                    let html = '<table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">';
+
+                    // Header
+                    html += '<thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"><tr>';
+                    data.fields.forEach(field => {
+                        html += `<th style="padding: 15px; text-align: left; font-weight: 600;">${field}</th>`;
+                    });
+                    html += '</tr></thead>';
+
+                    // Body
+                    html += '<tbody>';
+                    data.data.forEach((row, idx) => {
+                        const bgColor = idx % 2 === 0 ? '#f9f9f9' : 'white';
+                        html += `<tr style="background: ${bgColor};">`;
+                        data.fields.forEach(field => {
+                            let value = row[field];
+                            if (value === null) value = '<em style="color: #999;">null</em>';
+                            else if (typeof value === 'boolean') value = value ? '✓' : '✗';
+                            else if (typeof value === 'string' && value.length > 50) value = value.substring(0, 50) + '...';
+                            html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${value}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+
+                    dataDiv.innerHTML = html;
+                } catch (error) {
+                    dataDiv.innerHTML = `<div class="loading">❌ Error: ${error.message}</div>`;
+                }
+            };
+
+            loadTableData();
+        }
+
+        async function showAPITab(content) {
+            content.innerHTML = `
+                <h2 style="color: #667eea; margin-bottom: 30px;">📡 API Explorer</h2>
+                <div style="text-align: center;">
+                    <p style="font-size: 1.2em; margin-bottom: 30px; color: #666;">
+                        Explora todos los endpoints de la API
+                    </p>
+                    <a href="/api/docs/" class="api-link" target="_blank">📚 Documentación ReDoc</a>
+                    <a href="/api/schema/" class="api-link" target="_blank">📋 Schema OpenAPI</a>
+                    <a href="/admin/" class="api-link" target="_blank">⚙️ Panel Admin</a>
+                </div>
+                <div style="margin-top: 50px; padding: 30px; background: #f5f5f5; border-radius: 15px;">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">🔗 Endpoints Principales</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <div style="padding: 15px; background: white; border-radius: 10px;">
+                            <strong>GET /api/equipos/</strong><br>
+                            <span style="color: #666;">Listar equipos</span>
+                        </div>
+                        <div style="padding: 15px; background: white; border-radius: 10px;">
+                            <strong>GET /api/mantenimientos/</strong><br>
+                            <span style="color: #666;">Listar mantenimientos</span>
+                        </div>
+                        <div style="padding: 15px; background: white; border-radius: 10px;">
+                            <strong>GET /api/recursos/</strong><br>
+                            <span style="color: #666;">Listar recursos</span>
+                        </div>
+                        <div style="padding: 15px; background: white; border-radius: 10px;">
+                            <strong>GET /api/eventos/</strong><br>
+                            <span style="color: #666;">Listar eventos</span>
+                        </div>
+                        <div style="padding: 15px; background: white; border-radius: 10px;">
+                            <strong>GET /api/db/stats/</strong><br>
+                            <span style="color: #666;">Estadísticas BD</span>
+                        </div>
+                        <div style="padding: 15px; background: white; border-radius: 10px;">
+                            <strong>GET /api/ia-dashboard/evolution/</strong><br>
+                            <span style="color: #666;">Evolución IA</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Cargar tab inicial
+        setTimeout(() => showTab('db'), 100);
+
+        // Auto-refresh cada 30 segundos si está en tab de IA
+        setInterval(() => {
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab && activeTab.textContent.includes('IA')) {
+                showTab('ia');
+            }
+        }, 30000);
+    </script>
+</body>
+
+</html>
