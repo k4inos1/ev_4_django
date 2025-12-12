@@ -751,3 +751,32 @@ class SistemaInteligenteViewSet(viewsets.ViewSet):
             return Response(resultado)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+    @action(detail=False, methods=["post"])
+    def chat_ia(self, request):
+        """Chat con el asistente IA"""
+        try:
+            mensaje = request.data.get("mensaje", "")
+            from api.servicios.chat_service import ChatService
+
+            respuesta = ChatService.procesar_mensaje(mensaje)
+            return Response({"respuesta": respuesta})
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    @action(detail=False, methods=["post"])
+    def entrenar_cortex(self, request):
+        """Entrena la Red Neuronal con historial real"""
+        try:
+            from api.servicios.cortex_service import CortexService
+
+            loss = CortexService.entrenar_con_historia()
+            return Response(
+                {
+                    "mensaje": "Núcleo Cortex re-calibrado",
+                    "loss_final": f"{loss:.4f}",
+                    "estado": "Red Neuronal Operativa",
+                }
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

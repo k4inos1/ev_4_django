@@ -401,13 +401,12 @@ async function loadAnalytics() {
     ]);
 
     const html = `
-    const html = `
-        < div style = "display:flex; justify-content:space-between; align-items:center;" >
+        <div style="display:flex; justify-content:space-between; align-items:center;">
              <h2 class="section-title"><i class="fas fa-chart-line"></i> Analytics & Predicciones IA</h2>
              <button class="control-btn" onclick="runAutomata()" style="background:var(--secondary);">
                 <i class="fas fa-robot"></i> Ejecutar Autómata
              </button>
-        </div >
+        </div>
         
         <div class="cards-grid">
             <div class="card">
@@ -512,13 +511,13 @@ async function loadKnowledgeData() {
         if (!tbody) return;
 
         tbody.innerHTML = data.map(item => `
-        < tr >
+            <tr>
                 <td><input type="checkbox" class="k-check" value="${item.id}"></td>
                 <td><strong>${item.titulo}</strong></td>
                 <td><a href="${item.fuente}" target="_blank" style="color:#4bc0c0;">Enlace</a></td>
                 <td>${new Date(item.fecha).toLocaleString()}</td>
                 <td>${item.resumen}</td>
-            </tr >
+            </tr>
         `).join('') || '<tr><td colspan="5" style="text-align:center;">Sin datos recopilados</td></tr>';
     } catch (e) {
         console.error(e);
@@ -546,22 +545,22 @@ async function previewDataGeneration(qty) {
 
         let html = '<table class="table-compact"><thead><tr><th>Equipo</th><th>Mantenimiento (IA Generated)</th><th>Costo Est.</th></tr></thead><tbody>';
         data.mantenimientos.slice(0, 10).forEach(m => {
-            html += `< tr >
+            html += `<tr>
                 <td>${m.equipo}</td>
                 <td>${m.descripcion}</td>
                 <td>$${m.costo.toFixed(2)}</td>
-            </tr > `;
+            </tr>`;
         });
         html += '</tbody></table>';
 
         if (data.mantenimientos.length > 10) {
-            html += `< p style = "text-align:center; color:#888;" >... y ${ data.mantenimientos.length - 10 } más</p > `;
+            html += `<p style="text-align:center; color:#888;">... y ${data.mantenimientos.length - 10} más</p>`;
         }
 
         content.innerHTML = html;
 
     } catch (e) {
-        content.innerHTML = `< div class="error-text" > Error: ${ e.message }</div > `;
+        content.innerHTML = `<div class="error-text">Error: ${e.message}</div>`;
     }
 }
 
@@ -576,7 +575,7 @@ async function deleteSelectedKnowledge() {
     const selected = Array.from(document.querySelectorAll('.k-check:checked')).map(cb => cb.value);
     if (selected.length === 0) return alert("Seleccione items para eliminar");
 
-    if (confirm(`¿Eliminar ${ selected.length } elementos de conocimiento ? `)) {
+    if (confirm(`¿Eliminar ${selected.length} elementos de conocimiento ? `)) {
         try {
             const res = await fetch('/api/sistema/gestionar_conocimiento/', {
                 method: 'POST',
@@ -601,7 +600,7 @@ async function loadVisualizer() {
     } catch (e) { console.error("Error stats", e); }
 
     const html = `
-        < h2 class="section-title" > Visualizador: Flujo de Aprendizaje IA</h2 >
+        <h2 class="section-title">Visualizador: Flujo de Aprendizaje IA</h2>
         <div class="pipeline-container">
             <!-- Step 1: Input / Scraping -->
             <div class="pipeline-step" id="step-1">
@@ -683,7 +682,7 @@ async function openKnowledgeModal() {
     const data = await res.json();
 
     document.getElementById('knowledge-table-container').innerHTML = `
-        < table class="table-compact" style = "margin-top:10px;" >
+        <table class="table-compact" style="margin-top:10px;">
             <thead><tr><th>Sel</th><th>Título</th><th>Fuente</th><th>Resumen</th></tr></thead>
             <tbody>
                 ${data.map(k => `<tr>
@@ -693,8 +692,7 @@ async function openKnowledgeModal() {
                     <td>${k.resumen.substring(0, 50)}...</td>
                 </tr>`).join('')}
             </tbody>
-        </table >
-        `;
+        </table>`;
 }
 
 function closeKnowledgeModal() {
@@ -736,12 +734,12 @@ async function previewDataGenerationViz() {
 
         let html = '';
         data.equipos.slice(0, 5).forEach(e => {
-            html += `< div class="data-chip temp" >
+            html += `<div class="data-chip temp">
                 <strong>Propuesta: ${e.nombre}</strong>
                 <small>Cat: ${e.categoria} | Basado en conocimiento previo</small>
-            </div > `;
+            </div> `;
         });
-        html += `< div style = "text-align:center; font-style:italic; color:#888;" > + ${ data.equipos.length - 5 } items más...</div > `;
+        html += `<div style="text-align:center; font-style:italic; color:#888;">+ ${data.equipos.length - 5} items más...</div>`;
         p3.innerHTML = html;
 
         // Show modal as well for full details
@@ -754,7 +752,7 @@ async function previewDataGenerationViz() {
 
 
 async function generarDatos(cantidad) {
-    if (confirm(`Generar ${ cantidad } datos aleatorios ? `)) {
+    if (confirm(`Generar ${cantidad} datos aleatorios ? `)) {
         try {
             const response = await fetch('/api/sistema/generar_datos_prueba/', {
                 method: 'POST',
@@ -786,7 +784,7 @@ async function generarRecomendaciones() {
     try {
         const response = await fetch('/api/v2/recomendaciones/generar/', { method: 'POST' });
         const result = await response.json();
-        alert(`${ result.total } recomendaciones generadas`);
+        alert(`${result.total} recomendaciones generadas`);
         loadTabContent(currentTab);
     } catch (error) {
         alert('Error: ' + error.message);
@@ -820,7 +818,7 @@ async function resetDatabase() {
 }
 
 async function scrapearCategoria(categoria) {
-    if (confirm(`Iniciar aprendizaje web para categoría ${ categoria }?`)) {
+    if (confirm(`Iniciar aprendizaje web para categoría ${categoria}?`)) {
         try {
             const btn = event.target;
             const originalText = btn.innerText;
@@ -834,7 +832,7 @@ async function scrapearCategoria(categoria) {
             });
             const result = await response.json();
 
-            alert(`Aprendizaje completado: ${ result.mensaje } \nResultados: ${ result.resultados.resultados_encontrados } `);
+            alert(`Aprendizaje completado: ${result.mensaje} \nResultados: ${result.resultados.resultados_encontrados} `);
             loadTabContent(currentTab);
 
             btn.innerText = originalText;
@@ -863,7 +861,7 @@ async function scrapearCustom() {
             });
             const result = await response.json();
 
-            alert(`Investigación completa.\nEncontrados: ${ result.resultados.resultados_encontrados } \nGuardados: ${ result.resultados.conocimientos_guardados } `);
+            alert(`Investigación completa.\nEncontrados: ${result.resultados.resultados_encontrados} \nGuardados: ${result.resultados.conocimientos_guardados} `);
 
             btn.innerText = originalText;
             btn.disabled = false;
@@ -924,3 +922,80 @@ async function loadSettings() {
 
 // Initialize
 loadDashboard();
+
+// Chat Widget Logic
+if (!document.getElementById('chat-root')) {
+    const chatContainer = document.createElement('div');
+    chatContainer.id = 'chat-root';
+    chatContainer.innerHTML = `
+        <div class="chat-toggle-btn" onclick="toggleChat()">
+            <i class="fas fa-comment-dots"></i>
+        </div>
+        <div class="chat-widget" id="chat-widget">
+            <div class="chat-header">
+                <span>Asistente IA</span>
+                <i class="fas fa-times" onclick="toggleChat()" style="cursor:pointer;"></i>
+            </div>
+            <div class="chat-body" id="chat-body">
+                <div class="chat-msg ia">Hola, soy el núcleo de EV4. ¿En qué te ayudo?</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Escribe tu consulta..." onkeypress="if(event.key==='Enter') sendChat()">
+                <button class="btn" style="padding:0 10px;" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(chatContainer);
+}
+
+function toggleChat() {
+    const w = document.getElementById('chat-widget');
+    const btn = document.querySelector('.chat-toggle-btn');
+    if (w.style.display === 'flex') {
+        w.style.display = 'none';
+        btn.style.display = 'flex';
+    } else {
+        w.style.display = 'flex';
+        btn.style.display = 'none';
+        document.getElementById('chat-input').focus();
+    }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Add User Message
+    const body = document.getElementById('chat-body');
+    body.innerHTML += `<div class="chat-msg user">${text}</div>`;
+    input.value = '';
+    body.scrollTop = body.scrollHeight;
+
+    // Loading marker
+    const loadId = 'load-' + Date.now();
+    body.innerHTML += `<div class="chat-msg ia" id="${loadId}">...</div>`;
+
+    try {
+        const res = await fetch('/api/sistema/chat_ia/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mensaje: text })
+        });
+        const data = await res.json();
+
+        // Remove loader and add response
+        document.getElementById(loadId).remove();
+
+        // Format response (simple markdown to html conversion)
+        let formatted = data.respuesta
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        body.innerHTML += `<div class="chat-msg ia">${formatted}</div>`;
+        body.scrollTop = body.scrollHeight;
+
+    } catch (e) {
+        document.getElementById(loadId).innerText = "Error de conexión.";
+    }
+}
