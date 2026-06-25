@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from drf_spectacular.utils import extend_schema
 
 from api.servicios.ia_core import ia_sistema
 from api.models import Mantenimiento, Recurso
+
+logger = logging.getLogger(__name__)
 
 
 @extend_schema(tags=["Sistema Inteligente"])
@@ -282,8 +285,10 @@ class SistemaInteligenteViewSet(viewsets.ViewSet):
             )
         except Exception as e:
             sys.stdout = sys.__stdout__
+            logger.exception("Error al generar datos automaticamente: %s", e)
             return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": "Ha ocurrido un error interno."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @extend_schema(
@@ -342,8 +347,10 @@ class SistemaInteligenteViewSet(viewsets.ViewSet):
 
         except Exception as e:
             sys.stdout = sys.__stdout__
+            logger.exception("Error en pipeline automatico completo: %s", e)
             return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": "Ha ocurrido un error interno."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(detail=False, methods=["post"])
