@@ -705,7 +705,11 @@ async function scrapearCustomViz() {
     const prompt = document.getElementById('viz-prompt').value;
     if (!prompt) return alert("Ingrese un tema");
 
-    document.getElementById('p-step-1').innerHTML = '<div class="loading-mini">Rastreando: ' + prompt + '...</div>';
+    const pStep1 = document.getElementById('p-step-1');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-mini';
+    loadingDiv.textContent = 'Rastreando: ' + prompt + '...';
+    pStep1.replaceChildren(loadingDiv);
 
     // Call existing
     await fetch('/api/sistema/aprender_web/', {
